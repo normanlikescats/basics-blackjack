@@ -1,20 +1,25 @@
 // Define Player Object
 let playerOne = {
-  CardOne: "",
-  CardTwo: "",
-  Score: "",
+  Hand: [],
+  Score: 0,
 };
 
 // Define Computer Variables
 let cpuObj = {
-  CardOne: "",
-  CardTwo: "",
-  Score: "",
+  Hand: [],
+  Score: 0,
 };
+
+// Define Game Deck
+let gameDeck = [];
+
+// Define Player's Hand (Text)
+let playerHandCards = "";
 
 // Define Game Modes
 const dealPhase = "dealPhase";
 const playerActionPhase = "playerActionPhase";
+const compareScorePhase = "compareScorePhase";
 let gameMode = dealPhase;
 
 // Define Make Deck Function
@@ -23,6 +28,8 @@ let currentSuitCounter = 0;
 let currentSuit = suits[0];
 let deckOverallCounter = 1;
 let deckInnerCounter = 1;
+
+// Define Player's Current Hand
 
 const generateDeck = function () {
   let deck = [];
@@ -96,37 +103,95 @@ const drawCard = function (shuffledDeck) {
 };
 
 // Player Action Function
+const playerHitOrStand = function (playerAction) {
+  let drawPhaseOutput = "";
+  if (typeof playerAction === "string") {
+    playerInput = playerAction.toLowerCase();
+    console.log(playerInput);
+    if (playerInput === "h") {
+      playerOne.Hand.push(drawCard(gameDeck));
+      playerHandCards =
+        playerHandCards +
+        `, ${playerOne.Hand[playerOne.Hand.length - 1].name} ${
+          playerOne.Hand[playerOne.Hand.length - 1].suit
+        }`;
+      drawPhaseOutput = `You have drawn ${
+        playerOne.Hand[playerOne.Hand.length - 1].rank
+      }${
+        playerOne.Hand[playerOne.Hand.length - 1].suit
+      }. <br></br> ${playerHandCards}. <br></br>If you would like to draw another card, please input 'h'.<br></br>If not, input 's'.`;
+    } else if (playerInput === "s") {
+      drawPhaseOutput = `You have chosen to Stand. Click submit to see who won!`;
+      gameMode = compareScorePhase;
+    } else {
+      drawPhaseOutput = `You drew ${playerOne.Hand[0].name} ${playerOne.Hand[0].suit} and ${playerOne.Hand[1].name} ${playerOne.Hand[1].suit}. <br></br>The Computer's first card is ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit}.<br> </br><br> </br>Please input either 'h' or 's'.`;
+    }
+  } else {
+    drawPhaseOutput = `You drew ${playerOne.Hand[0].name} ${playerOne.Hand[0].suit} and ${playerOne.Hand[1].name} ${playerOne.Hand[1].suit}. <br></br>The Computer's first card is ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit}.<br> </br><br> </br>Please input either 'h' or 's'.`;
+  }
+  return drawPhaseOutput;
+};
 
 // Define Comparison Function
 const compareScore = function () {
   let myOutputValue = "";
-  playerOne.Score = playerOne.CardOne.rank + playerOne.CardTwo.rank;
-  cpuObj.Score = cpuObj.CardOne.rank + cpuObj.CardTwo.rank;
-  console.log(cpuObj.Score);
-  console.log(playerOne.Score);
-  let baseMessage = `The Computer drew ${cpuObj.CardOne.name} ${cpuObj.CardOne.suit} and ${cpuObj.CardTwo.name} ${cpuObj.CardTwo.suit}. <br> </br> You drew ${playerOne.CardOne.name} ${playerOne.CardOne.suit} and ${playerOne.CardTwo.name} ${playerOne.CardTwo.suit}. <br></br>`;
-  if (playerOne.Score > cpuObj.Score) {
-    myOutputValue = baseMessage + "You won!";
-  } else if (playerOne.Score < cpuObj.Score) {
-    myOutputValue = baseMessage + "You lost!";
-  } else {
-    myOutputValue = baseMessage + "It's a tie!";
+  // Iterate through Player's Hand to compute score
+  let playerScoreCounter = 0;
+  while (playerScoreCounter < playerOne.Hand.length) {
+    playerOne.Score += playerOne.Hand[playerScoreCounter].rank;
+    playerScoreCounter += 1;
   }
+  // Compute Computer Score
+  cpuObj.Score = cpuObj.Hand[0].rank + cpuObj.Hand[1].rank;
+  let baseMessage = `The Computer drew ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit} and ${cpuObj.Hand[1].name} ${cpuObj.Hand[1].suit}. <br> </br> ${playerHandCards} <br></br>`;
+  // Player wins
+  if (playerOne.Score > cpuObj.Score) {
+    myOutputValue =
+      baseMessage +
+      "You won!" +
+      `<br></br> Hit Submit to go for another round!`;
+  } else if (playerOne.Score < cpuObj.Score) {
+    // Player loses
+    myOutputValue =
+      baseMessage +
+      "You lost!" +
+      `<br></br> Hit Submit to go for another round!`;
+  } else {
+    // Same value, tied
+    myOutputValue =
+      baseMessage +
+      "It's a tie!" +
+      `<br></br> Hit Submit to go for another round!`;
+  }
+  gameMode = dealPhase;
   return myOutputValue;
 };
 
 // Define main function
-const main = function () {
-  console.log(suits);
+const main = function (input) {
   let outputMessage = "";
-  // Generate and Shuffle Deck
-  let unshuffledDeck = generateDeck();
-  let gameDeck = shuffleDeck(unshuffledDeck);
-  // Draw Cards
-  playerOne.CardOne = drawCard(gameDeck);
-  playerOne.CardTwo = drawCard(gameDeck);
-  cpuObj.CardOne = drawCard(gameDeck);
-  cpuObj.CardTwo = drawCard(gameDeck);
-  outputMessage = compareScore();
+  if (gameMode === dealPhase) {
+    // Generate and Shuffle Deck
+    let unshuffledDeck = generateDeck();
+    gameDeck = shuffleDeck(unshuffledDeck);
+    // Draw Cards
+    playerOne.Hand.push(drawCard(gameDeck));
+    playerOne.Hand.push(drawCard(gameDeck));
+    cpuObj.Hand.push(drawCard(gameDeck));
+    cpuObj.Hand.push(drawCard(gameDeck));
+    // Write out Player's Hand for Display Purposes
+    playerHandCards = `Your cards are: ${playerOne.Hand[0].name} ${playerOne.Hand[0].suit}, ${playerOne.Hand[1].name} ${playerOne.Hand[1].suit}`;
+    gameMode = playerActionPhase;
+    outputMessage =
+      playerHandCards +
+      `<br></br>The Computer's first card is ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit}.<br> </br><br> </br>If you would like to Hit, please input 'h'.<br> </br>If you wish to Stand, input 's'`;
+    gameMode = playerActionPhase;
+    return outputMessage;
+  } else if (gameMode === playerActionPhase) {
+    outputMessage = playerHitOrStand(input);
+    return outputMessage;
+  } else {
+    outputMessage = compareScore();
+  }
   return outputMessage;
 };
