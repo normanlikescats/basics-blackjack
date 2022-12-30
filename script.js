@@ -1,32 +1,24 @@
-// Define main function
-const main = function () {
-  let outputMessage = "";
-  // Generate and Shuffle Deck
-  let unshuffledDeck = generateDeck();
-  let gameDeck = shuffleDeck(unshuffledDeck);
-  // Draw Cards
-  playerCardOne = drawCard(gameDeck);
-  playerCardTwo = drawCard(gameDeck);
-  cpuCardOne = drawCard(gameDeck);
-  cpuCardTwo = drawCard(gameDeck);
-  outputMessage = compareScore();
-  return outputMessage;
+// Define Player Object
+let playerOne = {
+  CardOne: "",
+  CardTwo: "",
+  Score: "",
 };
 
-// Define Player Variables
-let playerCardOne = "";
-let playerCardTwo = "";
-let playerScore = "";
-
 // Define Computer Variables
-let cpuCardOne = "";
-let cpuCardTwo = "";
-let cpuScore = "";
+let cpuObj = {
+  CardOne: "",
+  CardTwo: "",
+  Score: "",
+};
 
-// Define Game Mode
+// Define Game Modes
+const dealPhase = "dealPhase";
+const playerActionPhase = "playerActionPhase";
+let gameMode = dealPhase;
 
 // Define Make Deck Function
-const suits = ["Spades", "Hearts", "Clubs", "Diamonds"];
+const suits = ["♠️", "♥️", "♣️", "♦️"];
 let currentSuitCounter = 0;
 let currentSuit = suits[0];
 let deckOverallCounter = 1;
@@ -59,7 +51,6 @@ const generateDeck = function () {
         deckInnerCounter === 12 ||
         deckInnerCounter === 13
       ) {
-        console.log(cardName);
         card.rank = 10;
       }
       deck.push(card);
@@ -104,20 +95,38 @@ const drawCard = function (shuffledDeck) {
   return drawnCard;
 };
 
+// Player Action Function
+
 // Define Comparison Function
 const compareScore = function () {
   let myOutputValue = "";
-  playerScore = playerCardOne.rank + playerCardTwo.rank;
-  cpuScore = cpuCardOne.rank + cpuCardTwo.rank;
-  console.log(playerScore);
-  console.log(cpuScore);
-  let baseMessage = `The Computer drew ${cpuCardOne.name} of ${cpuCardOne.suit} and ${cpuCardTwo.name} of ${cpuCardTwo.suit}. <br> </br> You drew ${playerCardOne.name} of ${playerCardOne.suit} and ${playerCardTwo.name} of ${playerCardTwo.suit}. <br></br>`;
-  if (playerScore > cpuScore) {
+  playerOne.Score = playerOne.CardOne.rank + playerOne.CardTwo.rank;
+  cpuObj.Score = cpuObj.CardOne.rank + cpuObj.CardTwo.rank;
+  console.log(cpuObj.Score);
+  console.log(playerOne.Score);
+  let baseMessage = `The Computer drew ${cpuObj.CardOne.name} ${cpuObj.CardOne.suit} and ${cpuObj.CardTwo.name} ${cpuObj.CardTwo.suit}. <br> </br> You drew ${playerOne.CardOne.name} ${playerOne.CardOne.suit} and ${playerOne.CardTwo.name} ${playerOne.CardTwo.suit}. <br></br>`;
+  if (playerOne.Score > cpuObj.Score) {
     myOutputValue = baseMessage + "You won!";
-  } else if (playerScore < cpuScore) {
+  } else if (playerOne.Score < cpuObj.Score) {
     myOutputValue = baseMessage + "You lost!";
   } else {
     myOutputValue = baseMessage + "It's a tie!";
   }
   return myOutputValue;
+};
+
+// Define main function
+const main = function () {
+  console.log(suits);
+  let outputMessage = "";
+  // Generate and Shuffle Deck
+  let unshuffledDeck = generateDeck();
+  let gameDeck = shuffleDeck(unshuffledDeck);
+  // Draw Cards
+  playerOne.CardOne = drawCard(gameDeck);
+  playerOne.CardTwo = drawCard(gameDeck);
+  cpuObj.CardOne = drawCard(gameDeck);
+  cpuObj.CardTwo = drawCard(gameDeck);
+  outputMessage = compareScore();
+  return outputMessage;
 };
