@@ -13,12 +13,14 @@ let cpuObj = {
 // Define Game Deck
 let gameDeck = [];
 
-// Define Player's Hand (Text)
+// Define CPU & Player's Hand (Text)
 let playerHandCards = "";
+let cpuHandCards = "";
 
 // Define Game Modes
 const dealPhase = "dealPhase";
 const playerActionPhase = "playerActionPhase";
+const cpuActionPhase = "cpuActionPhase";
 const compareScorePhase = "compareScorePhase";
 let gameMode = dealPhase;
 
@@ -28,8 +30,6 @@ let currentSuitCounter = 0;
 let currentSuit = suits[0];
 let deckOverallCounter = 1;
 let deckInnerCounter = 1;
-
-// Define Player's Current Hand
 
 const generateDeck = function () {
   let deck = [];
@@ -107,7 +107,6 @@ const playerHitOrStand = function (playerAction) {
   let drawPhaseOutput = "";
   if (typeof playerAction === "string") {
     playerInput = playerAction.toLowerCase();
-    console.log(playerInput);
     if (playerInput === "h") {
       playerOne.Hand.push(drawCard(gameDeck));
       playerHandCards =
@@ -116,24 +115,52 @@ const playerHitOrStand = function (playerAction) {
           playerOne.Hand[playerOne.Hand.length - 1].suit
         }`;
       drawPhaseOutput = `You have drawn ${
-        playerOne.Hand[playerOne.Hand.length - 1].rank
+        playerOne.Hand[playerOne.Hand.length - 1].name
       }${
         playerOne.Hand[playerOne.Hand.length - 1].suit
       }. <br></br> ${playerHandCards}. <br></br>If you would like to draw another card, please input 'h'.<br></br>If not, input 's'.`;
     } else if (playerInput === "s") {
       drawPhaseOutput = `You have chosen to Stand. Click submit to see who won!`;
-      gameMode = compareScorePhase;
+      gameMode = cpuActionPhase;
     } else {
       drawPhaseOutput = `You drew ${playerOne.Hand[0].name} ${playerOne.Hand[0].suit} and ${playerOne.Hand[1].name} ${playerOne.Hand[1].suit}. <br></br>The Computer's first card is ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit}.<br> </br><br> </br>Please input either 'h' or 's'.`;
     }
   } else {
     drawPhaseOutput = `You drew ${playerOne.Hand[0].name} ${playerOne.Hand[0].suit} and ${playerOne.Hand[1].name} ${playerOne.Hand[1].suit}. <br></br>The Computer's first card is ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit}.<br> </br><br> </br>Please input either 'h' or 's'.`;
   }
+  console.log(gameMode);
   return drawPhaseOutput;
+};
+
+// CPU Action Function
+const cpuHitOrStand = function () {
+  // Compute CPU Current Score
+  let outputValue = "";
+  let cpuScoreCounter = 0;
+  while (cpuScoreCounter < cpuObj.Hand.length) {
+    cpuObj.Score += cpuObj.Hand[cpuScoreCounter].rank;
+    cpuScoreCounter += 1;
+  }
+  // While  CPU Score < 17, hit
+  while (cpuObj.Score < 17) {
+    cpuObj.Hand.push(drawCard(gameDeck));
+    cpuObj.Score += cpuObj.Hand[cpuObj.Hand.length - 1].rank;
+    cpuHandCards =
+      cpuHandCards +
+      `, ${cpuObj.Hand[cpuObj.Hand.length - 1].name} ${
+        cpuObj.Hand[cpuObj.Hand.length - 1].suit
+      }`;
+  }
+  // Once CPU Score > 17, enter evaluation mode
+  gameMode = compareScorePhase;
+  console.log(gameMode);
+  outputValue = compareScore();
+  return outputValue;
 };
 
 // Define Comparison Function
 const compareScore = function () {
+  console.log("line 160" + " compare score run");
   let myOutputValue = "";
   // Iterate through Player's Hand to compute score
   let playerScoreCounter = 0;
@@ -141,29 +168,48 @@ const compareScore = function () {
     playerOne.Score += playerOne.Hand[playerScoreCounter].rank;
     playerScoreCounter += 1;
   }
-  // Compute Computer Score
-  cpuObj.Score = cpuObj.Hand[0].rank + cpuObj.Hand[1].rank;
-  let baseMessage = `The Computer drew ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit} and ${cpuObj.Hand[1].name} ${cpuObj.Hand[1].suit}. <br> </br> ${playerHandCards} <br></br>`;
-  // Player wins
-  if (playerOne.Score > cpuObj.Score) {
+  console.log("player score: " + playerOne.Score);
+  // Base Message to display both hands
+  let baseMessage = `${cpuHandCards}<br></br> ${playerHandCards} <br></br>`;
+  console.log(baseMessage);
+  // Check for > 21 points
+  if (playerOne.Score > 21 && cpuObj.Score > 21) {
+    myOutputValue =
+      baseMessage + `Both player and dealer are bust! It's a tie!`;
+  } else if (playerOne.Score > 21 && cpuObj.Score < 22) {
     myOutputValue =
       baseMessage +
-      "You won!" +
-      `<br></br> Hit Submit to go for another round!`;
-  } else if (playerOne.Score < cpuObj.Score) {
-    // Player loses
+      `You are bust! You lost! <br></br> Hit Submit to go for another round!`;
+  } else if (playerOne.Score < 22 && cpuObj.Score > 21) {
     myOutputValue =
       baseMessage +
-      "You lost!" +
-      `<br></br> Hit Submit to go for another round!`;
+      `The dealer is bust! You won! <br></br> Hit Submit to go for another round!`;
   } else {
-    // Same value, tied
-    myOutputValue =
-      baseMessage +
-      "It's a tie!" +
-      `<br></br> Hit Submit to go for another round!`;
+    if (playerOne.Score > cpuObj.Score) {
+      // Player wins
+      myOutputValue =
+        baseMessage +
+        "You won!" +
+        `<br></br> Hit Submit to go for another round!`;
+    } else if (playerOne.Score < cpuObj.Score) {
+      // Player loses
+      myOutputValue =
+        baseMessage +
+        "You lost!" +
+        `<br></br> Hit Submit to go for another round!`;
+    } else {
+      // Same value, tied
+      myOutputValue =
+        baseMessage +
+        "It's a tie!" +
+        `<br></br> Hit Submit to go for another round!`;
+    }
   }
+  console.log(myOutputValue);
   gameMode = dealPhase;
+  // reset hands
+  playerOne.Hand = [];
+  cpuObj.Hand = [];
   return myOutputValue;
 };
 
@@ -181,17 +227,21 @@ const main = function (input) {
     cpuObj.Hand.push(drawCard(gameDeck));
     // Write out Player's Hand for Display Purposes
     playerHandCards = `Your cards are: ${playerOne.Hand[0].name} ${playerOne.Hand[0].suit}, ${playerOne.Hand[1].name} ${playerOne.Hand[1].suit}`;
+    // Write out CPU's Hand for Display Purposes
+    cpuHandCards = `The Computer's cards are: ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit}, ${cpuObj.Hand[1].name} ${cpuObj.Hand[1].suit}`;
     gameMode = playerActionPhase;
     outputMessage =
       playerHandCards +
       `<br></br>The Computer's first card is ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit}.<br> </br><br> </br>If you would like to Hit, please input 'h'.<br> </br>If you wish to Stand, input 's'`;
     gameMode = playerActionPhase;
+    console.log(cpuHandCards);
     return outputMessage;
   } else if (gameMode === playerActionPhase) {
     outputMessage = playerHitOrStand(input);
     return outputMessage;
-  } else {
-    outputMessage = compareScore();
+  } else if (gameMode === cpuActionPhase) {
+    outputMessage = cpuHitOrStand();
+    console.log(gameMode);
+    return outputMessage;
   }
-  return outputMessage;
 };
