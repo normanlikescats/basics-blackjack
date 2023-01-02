@@ -102,6 +102,27 @@ const drawCard = function (shuffledDeck) {
   return drawnCard;
 };
 
+// Deal Phase Function
+const dealPhaseFunction = function () {
+  // Generate and Shuffle Deck
+  let unshuffledDeck = generateDeck();
+  gameDeck = shuffleDeck(unshuffledDeck);
+  // Draw Cards
+  playerOne.Hand.push(drawCard(gameDeck));
+  playerOne.Hand.push(drawCard(gameDeck));
+  cpuObj.Hand.push(drawCard(gameDeck));
+  cpuObj.Hand.push(drawCard(gameDeck));
+  // Write out Player's Hand for Display Purposes
+  playerHandCards = `Your cards are: ${playerOne.Hand[0].name} ${playerOne.Hand[0].suit}, ${playerOne.Hand[1].name} ${playerOne.Hand[1].suit}`;
+  // Write out CPU's Hand for Display Purposes
+  cpuHandCards = `The Computer's cards are: ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit}, ${cpuObj.Hand[1].name} ${cpuObj.Hand[1].suit}`;
+  gameMode = playerActionPhase;
+  outputMessage =
+    playerHandCards +
+    `<br></br>The Computer's first card is ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit}.<br> </br><br> </br>If you would like to Hit, please input 'h'.<br> </br>If you wish to Stand, input 's'`;
+  return outputMessage;
+};
+
 // Player Action Function
 const playerHitOrStand = function (playerAction) {
   let drawPhaseOutput = "";
@@ -116,7 +137,7 @@ const playerHitOrStand = function (playerAction) {
         }`;
       drawPhaseOutput = `You have drawn ${
         playerOne.Hand[playerOne.Hand.length - 1].name
-      }${
+      } ${
         playerOne.Hand[playerOne.Hand.length - 1].suit
       }. <br></br> ${playerHandCards}. <br></br>If you would like to draw another card, please input 'h'.<br></br>If not, input 's'.`;
     } else if (playerInput === "s") {
@@ -134,12 +155,31 @@ const playerHitOrStand = function (playerAction) {
 
 // CPU Action Function
 const cpuHitOrStand = function () {
-  // Compute CPU Current Score
   let outputValue = "";
   let cpuScoreCounter = 0;
+  let cpuAceCounter = 0;
+  cpuObj.Hand.sort();
+  console.log(cpuObj.Hand);
+  // Compute CPU score
   while (cpuScoreCounter < cpuObj.Hand.length) {
+    // Handling 2 aces???
+    console.log();
+    while (
+      cpuObj.Hand.length === 2 &&
+      cpuObj.Hand[cpuScoreCounter].name === "Ace" &&
+      cpuAceCounter === 0
+    ) {
+      console.log("we ran line 1");
+      cpuObj.Hand[cpuScoreCounter].rank = 11;
+      cpuObj.Score += cpuObj.Hand[cpuScoreCounter].rank;
+      cpuScoreCounter += 1;
+      cpuAceCounter += 1;
+    }
+    console.log("we ran line2");
+    console.log("cpu card 2 rank =" + cpuObj.Hand[cpuScoreCounter].rank);
     cpuObj.Score += cpuObj.Hand[cpuScoreCounter].rank;
     cpuScoreCounter += 1;
+    console.log(cpuObj.Score);
   }
   // While  CPU Score < 17, hit
   while (cpuObj.Score < 17) {
@@ -162,15 +202,24 @@ const cpuHitOrStand = function () {
 const compareScore = function () {
   console.log("line 160" + " compare score run");
   let myOutputValue = "";
+  let playerAceCounter = 0;
+  // Sort Player's Hand to Find Aces
+  playerOne.Hand.sort().reverse();
   // Iterate through Player's Hand to compute score
   let playerScoreCounter = 0;
   while (playerScoreCounter < playerOne.Hand.length) {
+    if (
+      playerOne.Hand[playerOne.Hand.length - 1].name === "Ace" &&
+      playerAceCounter === 0
+    ) {
+      playerOne.Hand[playerOne.Hand.length - 1].rank = 11;
+    }
     playerOne.Score += playerOne.Hand[playerScoreCounter].rank;
     playerScoreCounter += 1;
   }
   console.log("player score: " + playerOne.Score);
   // Base Message to display both hands
-  let baseMessage = `${cpuHandCards}<br></br> ${playerHandCards} <br></br>`;
+  let baseMessage = `${cpuHandCards} (${cpuObj.Score} points)<br></br> ${playerHandCards} (${playerOne.Score} points)<br></br>`;
   console.log(baseMessage);
   // Check for > 21 points
   if (playerOne.Score > 21 && cpuObj.Score > 21) {
@@ -216,24 +265,9 @@ const compareScore = function () {
 // Define main function
 const main = function (input) {
   let outputMessage = "";
+  console.log(gameMode);
   if (gameMode === dealPhase) {
-    // Generate and Shuffle Deck
-    let unshuffledDeck = generateDeck();
-    gameDeck = shuffleDeck(unshuffledDeck);
-    // Draw Cards
-    playerOne.Hand.push(drawCard(gameDeck));
-    playerOne.Hand.push(drawCard(gameDeck));
-    cpuObj.Hand.push(drawCard(gameDeck));
-    cpuObj.Hand.push(drawCard(gameDeck));
-    // Write out Player's Hand for Display Purposes
-    playerHandCards = `Your cards are: ${playerOne.Hand[0].name} ${playerOne.Hand[0].suit}, ${playerOne.Hand[1].name} ${playerOne.Hand[1].suit}`;
-    // Write out CPU's Hand for Display Purposes
-    cpuHandCards = `The Computer's cards are: ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit}, ${cpuObj.Hand[1].name} ${cpuObj.Hand[1].suit}`;
-    gameMode = playerActionPhase;
-    outputMessage =
-      playerHandCards +
-      `<br></br>The Computer's first card is ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit}.<br> </br><br> </br>If you would like to Hit, please input 'h'.<br> </br>If you wish to Stand, input 's'`;
-    gameMode = playerActionPhase;
+    outputMessage = dealPhaseFunction();
     console.log(cpuHandCards);
     return outputMessage;
   } else if (gameMode === playerActionPhase) {
@@ -245,3 +279,24 @@ const main = function (input) {
     return outputMessage;
   }
 };
+
+// Variables for testing
+/*.
+.
+.
+.
+.
+
+
+aceObject = {
+  name: "Ace",
+  rank: 1,
+  suit: "♠️",
+};
+
+aceObject2 = {
+  name: "Ace",
+  rank: 1,
+  suit: "♣️",
+};
+*/
