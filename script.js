@@ -68,6 +68,11 @@ const generateDeck = function () {
     currentSuitCounter += 1;
     currentSuit = suits[currentSuitCounter];
   }
+  // Reset counters for subsequent round of dealing
+  deckInnerCounter = 1;
+  deckOverallCounter = 1;
+  currentSuitCounter = 0;
+  currentSuit = suits[currentSuitCounter];
   return deck;
 };
 
@@ -125,6 +130,7 @@ const dealPhaseFunction = function () {
 
 // Player Action Function
 const playerHitOrStand = function (playerAction) {
+  console.log(playerOne.Hand);
   let drawPhaseOutput = "";
   if (typeof playerAction === "string") {
     playerInput = playerAction.toLowerCase();
@@ -162,7 +168,7 @@ const cpuHitOrStand = function () {
   console.log(cpuObj.Hand);
   // Compute CPU score
   while (cpuScoreCounter < cpuObj.Hand.length) {
-    // Handling 2 aces???
+    // Handling 2 aces
     console.log();
     while (
       cpuObj.Hand.length === 2 &&
@@ -176,6 +182,7 @@ const cpuHitOrStand = function () {
       cpuAceCounter += 1;
     }
     console.log("we ran line2");
+    console.log(cpuObj.Hand);
     console.log("cpu card 2 rank =" + cpuObj.Hand[cpuScoreCounter].rank);
     cpuObj.Score += cpuObj.Hand[cpuScoreCounter].rank;
     cpuScoreCounter += 1;
@@ -255,10 +262,12 @@ const compareScore = function () {
     }
   }
   console.log(myOutputValue);
+  // Reset game for another round
   gameMode = dealPhase;
-  // reset hands
   playerOne.Hand = [];
   cpuObj.Hand = [];
+  playerOne.Score = 0;
+  cpuObj.Score = 0;
   return myOutputValue;
 };
 
@@ -279,24 +288,3 @@ const main = function (input) {
     return outputMessage;
   }
 };
-
-// Variables for testing
-/*.
-.
-.
-.
-.
-
-
-aceObject = {
-  name: "Ace",
-  rank: 1,
-  suit: "♠️",
-};
-
-aceObject2 = {
-  name: "Ace",
-  rank: 1,
-  suit: "♣️",
-};
-*/
