@@ -2,6 +2,8 @@
 let playerOne = {
   Hand: [],
   Score: 0,
+  Bankroll: 0,
+  Bet: 0,
 };
 
 // Define Computer Variables
@@ -18,11 +20,15 @@ let playerHandCards = "";
 let cpuHandCards = "";
 
 // Define Game Modes
+const nameInputPhase = "nameInputPhase";
+const bankrollPhase = "bankrollPhase";
+const betPhase = "betPhase";
 const dealPhase = "dealPhase";
 const playerActionPhase = "playerActionPhase";
 const cpuActionPhase = "cpuActionPhase";
 const compareScorePhase = "compareScorePhase";
-let gameMode = dealPhase;
+const loserPhase = "loserPhase";
+let gameMode = nameInputPhase;
 
 // Define Make Deck Function
 const suits = ["♠️", "♥️", "♣️", "♦️"];
@@ -31,6 +37,60 @@ let currentSuit = suits[0];
 let deckOverallCounter = 1;
 let deckInnerCounter = 1;
 
+// Name Input Function
+const nameInput = function (input) {
+  let outputMessage = "";
+  playerOne.name = input;
+  gameMode = bankrollPhase;
+  outputMessage = `Welcome ${playerOne.name}, let's play Blackjack! <br></br> What will your initial bankroll be?`;
+  return outputMessage;
+};
+
+// Bankroll Phase Function
+let roundCounter = 1;
+const bankrollInitialInput = function (input) {
+  console.log(roundCounter);
+  let outputMessage = "";
+  if (isNaN(Number(input))) {
+    outputMessage = `Please insert a number for your initial bankroll.`;
+  } else {
+    if (roundCounter === 1) {
+      // Initial Bankroll for Round 1
+      playerOne.Bankroll = Number(input);
+      gameMode = betPhase;
+      outputMessage = `Initial Bankroll: $${playerOne.Bankroll} <br></br> Please place your bet for the first round.`;
+      roundCounter += 1;
+    } else {
+      // For bet placing on Round 2 onwards
+      outputMessage = `Current Bankroll: $${playerOne.Bankroll} <br></br> Please place your bet for the first round.`;
+      gameMode = betPhase;
+    }
+  }
+  return outputMessage;
+};
+
+// Bet Phase Function
+const betInput = function (input) {
+  let outputMessage = "";
+  if (isNaN(Number(input))) {
+    outputMessage = `Please insert a number for your initial bet.`;
+  } else {
+    if (Number(input) > playerOne.Bankroll) {
+      outputMessage = `Your bet cannot be larger than your initial bankroll. Please re-enter your bet for the first round. Your initial bankroll is $${playerOne.Bankroll}.`;
+    } else {
+      playerOne.Bet = Number(input);
+      gameMode = dealPhase;
+      if (playerOne.Bet === playerOne.Bankroll) {
+        outputMessage = `Bet Placed: $${playerOne.Bet} <br></br> GG ALL IN! <br></br>Let's play Blackjack! Hit Submit to Deal!`;
+      } else {
+        outputMessage = `Bet Placed: $${playerOne.Bet} <br></br> Let's play Blackjack! Hit Submit to Deal!`;
+      }
+    }
+  }
+  return outputMessage;
+};
+
+// Generate Unshuffled Deck Function
 const generateDeck = function () {
   let deck = [];
   while (deckOverallCounter <= 52) {
@@ -150,10 +210,10 @@ const playerHitOrStand = function (playerAction) {
       drawPhaseOutput = `You have chosen to Stand. Click submit to see who won!`;
       gameMode = cpuActionPhase;
     } else {
-      drawPhaseOutput = `You drew ${playerOne.Hand[0].name} ${playerOne.Hand[0].suit} and ${playerOne.Hand[1].name} ${playerOne.Hand[1].suit}. <br></br>The Computer's first card is ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit}.<br> </br><br> </br>Please input either 'h' or 's'.`;
+      drawPhaseOutput = `${playerHandCards}. <br></br>The Computer's first card is ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit}.<br> </br><br> </br>Please input either 'h' or 's'.`;
     }
   } else {
-    drawPhaseOutput = `You drew ${playerOne.Hand[0].name} ${playerOne.Hand[0].suit} and ${playerOne.Hand[1].name} ${playerOne.Hand[1].suit}. <br></br>The Computer's first card is ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit}.<br> </br><br> </br>Please input either 'h' or 's'.`;
+    drawPhaseOutput = `${playerHandCards}. <br></br>The Computer's first card is ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit}.<br> </br><br> </br>Please input either 'h' or 's'.`;
   }
   console.log(gameMode);
   return drawPhaseOutput;
@@ -227,55 +287,84 @@ const compareScore = function () {
   console.log("player score: " + playerOne.Score);
   // Base Message to display both hands
   let baseMessage = `${cpuHandCards} (${cpuObj.Score} points)<br></br> ${playerHandCards} (${playerOne.Score} points)<br></br>`;
-  console.log(baseMessage);
   // Check for > 21 points
   if (playerOne.Score > 21 && cpuObj.Score > 21) {
     myOutputValue =
-      baseMessage + `Both player and dealer are bust! It's a tie!`;
+      baseMessage +
+      `Both player and dealer are bust! It's a tie!<br></br>Your remaining bankroll is $${playerOne.Bankroll}.`;
   } else if (playerOne.Score > 21 && cpuObj.Score < 22) {
+    playerOne.Bankroll = playerOne.Bankroll - playerOne.Bet;
     myOutputValue =
       baseMessage +
-      `You are bust! You lost! <br></br> Hit Submit to go for another round!`;
+      `You are bust! You lost! <br></br>Your remaining bankroll is $${playerOne.Bankroll}.`;
   } else if (playerOne.Score < 22 && cpuObj.Score > 21) {
+    playerOne.Bankroll = playerOne.Bankroll + playerOne.Bet;
     myOutputValue =
       baseMessage +
-      `The dealer is bust! You won! <br></br> Hit Submit to go for another round!`;
+      `The dealer is bust! You won! <br></br>Your remaining bankroll is $${playerOne.Bankroll}.`;
   } else {
     if (playerOne.Score > cpuObj.Score) {
       // Player wins
+      playerOne.Bankroll = playerOne.Bankroll + playerOne.Bet;
       myOutputValue =
         baseMessage +
-        "You won!" +
-        `<br></br> Hit Submit to go for another round!`;
+        `You won!<br></br>Your remaining bankroll is $${playerOne.Bankroll}.`;
     } else if (playerOne.Score < cpuObj.Score) {
+      playerOne.Bankroll = playerOne.Bankroll - playerOne.Bet;
       // Player loses
       myOutputValue =
         baseMessage +
-        "You lost!" +
-        `<br></br> Hit Submit to go for another round!`;
+        `You lost!<br></br>Your remaining bankroll is $${playerOne.Bankroll}.`;
     } else {
       // Same value, tied
       myOutputValue =
         baseMessage +
-        "It's a tie!" +
-        `<br></br> Hit Submit to go for another round!`;
+        `It's a tie! <br></br>Your remaining bankroll is $${playerOne.Bankroll}.`;
     }
+  }
+  if (playerOne.Bankroll === 0) {
+    myOutputValue =
+      myOutputValue + `<br></br>Your bankroll is now $0. Thanks for playing :)`;
+    gameMode = loserPhase;
+  } else {
+    myOutputValue =
+      myOutputValue + `<br></br>Hit Submit to go for another round!`;
+    gameMode = bankrollPhase;
   }
   console.log(myOutputValue);
   // Reset game for another round
-  gameMode = dealPhase;
   playerOne.Hand = [];
   cpuObj.Hand = [];
   playerOne.Score = 0;
   cpuObj.Score = 0;
+  playerOne.Bet = 0;
   return myOutputValue;
+};
+
+// Create GIF element
+const gifCreate = function () {
+  let gifElement = document.createElement("img");
+  gifElement.src =
+    "https://media.tenor.com/mZZoOtDcouoAAAAM/stop-it-get-some-help.gif";
+  let divElement = document.getElementById("container");
+  divElement.appendChild(gifElement);
 };
 
 // Define main function
 const main = function (input) {
   let outputMessage = "";
   console.log(gameMode);
-  if (gameMode === dealPhase) {
+  if (gameMode === nameInputPhase) {
+    outputMessage = nameInput(input);
+    console.log(outputMessage);
+    return outputMessage;
+  } else if (gameMode === bankrollPhase) {
+    outputMessage = bankrollInitialInput(input);
+    return outputMessage;
+  } else if (gameMode === betPhase) {
+    outputMessage = betInput(input);
+    return outputMessage;
+  } else if (gameMode === dealPhase) {
     outputMessage = dealPhaseFunction();
     console.log(cpuHandCards);
     return outputMessage;
@@ -285,6 +374,10 @@ const main = function (input) {
   } else if (gameMode === cpuActionPhase) {
     outputMessage = cpuHitOrStand();
     console.log(gameMode);
+    return outputMessage;
+  } else if ((gameMode = loserPhase)) {
+    outputMessage = `You're just not that good, please stop gambling.`;
+    gifCreate();
     return outputMessage;
   }
 };
