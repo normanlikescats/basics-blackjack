@@ -183,7 +183,6 @@ const dealPhaseFunction = function () {
   playerOne.Hand.push(drawCard(gameDeck));
   cpuObj.Hand.push(drawCard(gameDeck));
   cpuObj.Hand.push(drawCard(gameDeck));
-  playerOne.Hand = testHand;
   // Write out Player's Hand for Display Purposes
   playerHandCards = `Your cards are: ${playerOne.Hand[0].name} ${playerOne.Hand[0].suit}, ${playerOne.Hand[1].name} ${playerOne.Hand[1].suit}`;
   // Write out CPU's Hand for Display Purposes
@@ -535,16 +534,3 @@ const main = function (input) {
     return outputMessage;
   }
 };
-
-let testHand = [
-  (card2 = {
-    name: 2,
-    rank: 2,
-    suit: "spades",
-  }),
-  (card1 = {
-    name: "Ace",
-    rank: 1,
-    suit: "clubs",
-  }),
-];
