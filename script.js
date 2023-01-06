@@ -57,7 +57,7 @@ const bankrollInitialInput = function (input) {
   } else {
     if (roundCounter === 1) {
       // Initial Bankroll for Round 1
-      if (playerInput === 0) {
+      if (playerInput <= 0) {
         outputMessage = `Please insert a number larger than 0.`;
       } else {
         playerOne.Bankroll = playerInput;
@@ -82,6 +82,8 @@ const betInput = function (input) {
   } else {
     if (Number(input) > playerOne.Bankroll) {
       outputMessage = `Your bet cannot be larger than your initial bankroll. Please re-enter your bet for the first round. Your initial bankroll is $${playerOne.Bankroll}.`;
+    } else if (Number(input) <= 0) {
+      outputMessage = `Please enter a number larger than 0.`;
     } else {
       playerOne.Bet = Number(input);
       gameMode = dealPhase;
@@ -182,6 +184,7 @@ const dealPhaseFunction = function () {
   playerOne.Hand.push(drawCard(gameDeck));
   cpuObj.Hand.push(drawCard(gameDeck));
   cpuObj.Hand.push(drawCard(gameDeck));
+  console.log(playerOne.Hand);
   // Write out Player's Hand for Display Purposes
   playerHandCards = `Your cards are: ${playerOne.Hand[0].name} ${playerOne.Hand[0].suit}, ${playerOne.Hand[1].name} ${playerOne.Hand[1].suit}`;
   // Write out CPU's Hand for Display Purposes
@@ -191,6 +194,103 @@ const dealPhaseFunction = function () {
     playerHandCards +
     `<br></br>The Computer's first card is ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit}.<br> </br><br> </br>If you would like to Hit, please input 'h'.<br> </br>If you wish to Stand, input 's'`;
   console.log(gameMode);
+  return outputMessage;
+};
+
+// Create Buttons for Hit or Stand
+const createButtons = function () {
+  // Create button for Hit or Stand
+  let hitButton = document.createElement("button");
+  hitButton.setAttribute("id", "hit-button");
+  hitButton.innerText = "Hit";
+  let outputTextTag = document.getElementById("output-text");
+  container.insertBefore(hitButton, outputTextTag);
+  let standButton = document.createElement("button");
+  standButton.setAttribute("id", "stand-button");
+  standButton.innerText = "Stand";
+  container.insertBefore(standButton, outputTextTag);
+  hitButton.addEventListener("click", playerHitAction);
+  standButton.addEventListener("click", playerStandAction);
+};
+
+// Blackjack Function
+const checkBlackjack = function () {
+  let playerBlackjackStatus = false;
+  let cpuBlackjackStatus = false;
+  // Sort Player and CPU Hand to check Blackjack conditions easily
+  playerOne.Hand.sort(function (a, b) {
+    return a.rank - b.rank;
+  });
+  cpuObj.Hand.sort(function (a, b) {
+    return a.rank - b.rank;
+  });
+  // Check if Player first card is Ace
+  if (playerOne.Hand[0].name === "Ace") {
+    if (
+      // Check if second card is any of the rank 10 cards
+      playerOne.Hand[1].rank === 10
+    ) {
+      playerBlackjackStatus = true;
+      console.log(playerBlackjackStatus);
+    }
+  }
+  // Check if CPU first card is Ace
+  if (cpuObj.Hand[0].name === "Ace") {
+    // Check if second card is any of the rank 10 cards
+    if (playerOne.Hand[1].rank === 10) {
+      cpuBlackjackStatus = true;
+    }
+  }
+  if (playerBlackjackStatus === true && cpuBlackjackStatus === false) {
+    // Player Blackjack only. Player wins!
+    playerOne.Bankroll += playerOne.Bet * 1.5;
+    outputMessage = `${playerHandCards}<br></br>${cpuHandCards}<br></br>You got B L A C K J A C K! You won 1.5x your original bet!<br></br>Your current bankroll is $${playerOne.Bankroll} <br></br>Hit Submit to go for another round!`;
+    gameMode = bankrollPhase;
+    removeButtons();
+    playerOne.Hand = [];
+    cpuObj.Hand = [];
+    playerOne.Score = 0;
+    cpuObj.Score = 0;
+    playerOne.Bet = 0;
+  } else if (playerBlackjackStatus === true && cpuBlackjackStatus === true) {
+    // Both player and dealer Blackjack. Tie!
+    outputMessage = `${playerHandCards}<br></br>${cpuHandCards}<br></br>Both the dealer and player got B L A C K J A C K! It's a tie!<br></br>Your current bankroll is $${playerOne.Bankroll} <br></br>Hit Submit to go for another round!`;
+    gameMode = bankrollPhase;
+    removeButtons();
+    playerOne.Hand = [];
+    cpuObj.Hand = [];
+    playerOne.Score = 0;
+    cpuObj.Score = 0;
+    playerOne.Bet = 0;
+  } else if (playerBlackjackStatus === false && cpuBlackjackStatus === true) {
+    // CPU Blackjack only. CPU wins!
+    playerOne.Bankroll -= playerOne.Bet;
+    outputMessage = `${playerHandCards}<br></br>${cpuHandCards}<br></br>The computer got B L A C K J A C K! You lost!`;
+    if (playerOne.Bankroll === 0) {
+      outputMessage =
+        outputMessage +
+        `<br></br>Your bankroll is now $0. Thanks for playing :)`;
+      gameMode = loserPhase;
+      removeButtons();
+      playerOne.Hand = [];
+      cpuObj.Hand = [];
+      playerOne.Score = 0;
+      cpuObj.Score = 0;
+      playerOne.Bet = 0;
+    } else {
+      outputMessage =
+        outputMessage +
+        `Your current bankroll is $${playerOne.Bankroll} <br></br>Hit Submit to go for another round!`;
+      gameMode = bankrollPhase;
+      removeButtons();
+      playerOne.Hand = [];
+      cpuObj.Hand = [];
+      playerOne.Score = 0;
+      cpuObj.Score = 0;
+      playerOne.Bet = 0;
+    }
+  }
+  console.log(outputMessage);
   return outputMessage;
 };
 
@@ -219,12 +319,9 @@ const playerStandAction = function () {
   let drawPhaseOutput = "";
   drawPhaseOutput = `You have chosen to Stand. Click submit to see who won!`;
   gameMode = cpuActionPhase;
-  var output = document.querySelector("#output-div");
+  let output = document.querySelector("#output-div");
   output.innerHTML = drawPhaseOutput;
-  var hitButton = document.querySelector("#hit-button");
-  hitButton = hitButton.remove();
-  var standButton = document.querySelector("#stand-button");
-  standButton.remove();
+  removeButtons();
 };
 
 // CPU Action Function
@@ -273,13 +370,24 @@ const cpuHitOrStand = function () {
   return outputValue;
 };
 
+// Button Removal Function
+const removeButtons = function () {
+  let hitButton = document.querySelector("#hit-button");
+  hitButton = hitButton.remove();
+  let standButton = document.querySelector("#stand-button");
+  standButton.remove();
+};
+
 // Define Comparison Function
 const compareScore = function () {
   console.log("line 160" + " compare score run");
   let myOutputValue = "";
   let playerAceCounter = 0;
   // Sort Player's Hand to Find Aces
-  playerOne.Hand.sort().reverse();
+  playerOne.Hand.sort(function (a, b) {
+    return a.rank - b.rank;
+  });
+  console.log(playerOne.Hand);
   // Iterate through Player's Hand to compute score
   let playerScoreCounter = 0;
   while (playerScoreCounter < playerOne.Hand.length) {
@@ -394,18 +502,10 @@ const main = function (input) {
     return outputMessage;
   } else if (gameMode === dealPhase) {
     outputMessage = dealPhaseFunction();
-    // Create button for Hit or Stand
-    var hitButton = document.createElement("button");
-    hitButton.setAttribute("id", "hit-button");
-    hitButton.innerText = "Hit";
-    let outputTextTag = document.getElementById("output-text");
-    container.insertBefore(hitButton, outputTextTag);
-    var standButton = document.createElement("button");
-    standButton.setAttribute("id", "stand-button");
-    standButton.innerText = "Stand";
-    container.insertBefore(standButton, outputTextTag);
-    hitButton.addEventListener("click", playerHitAction);
-    standButton.addEventListener("click", playerStandAction);
+    // Create buttons for hit or stand
+    createButtons();
+    // Check for Blackjack conditions, instant win!
+    outputMessage = checkBlackjack();
     console.log(cpuHandCards);
     return outputMessage;
   } else if (gameMode === playerActionPhase) {
