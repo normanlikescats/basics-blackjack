@@ -51,15 +51,20 @@ let roundCounter = 1;
 const bankrollInitialInput = function (input) {
   console.log(roundCounter);
   let outputMessage = "";
-  if (isNaN(Number(input))) {
+  let playerInput = Number(input);
+  if (isNaN(playerInput)) {
     outputMessage = `Please insert a number for your initial bankroll.`;
   } else {
     if (roundCounter === 1) {
       // Initial Bankroll for Round 1
-      playerOne.Bankroll = Number(input);
-      gameMode = betPhase;
-      outputMessage = `Initial Bankroll: $${playerOne.Bankroll} <br></br> Please place your bet for the first round.`;
-      roundCounter += 1;
+      if (playerInput === 0) {
+        outputMessage = `Please insert a number larger than 0.`;
+      } else {
+        playerOne.Bankroll = playerInput;
+        gameMode = betPhase;
+        outputMessage = `Initial Bankroll: $${playerOne.Bankroll} <br></br> Please place your bet for the first round.`;
+        roundCounter += 1;
+      }
     } else {
       // For bet placing on Round 2 onwards
       outputMessage = `Current Bankroll: $${playerOne.Bankroll} <br></br> Please place your bet for the first round.`;
@@ -81,7 +86,7 @@ const betInput = function (input) {
       playerOne.Bet = Number(input);
       gameMode = dealPhase;
       if (playerOne.Bet === playerOne.Bankroll) {
-        outputMessage = `Bet Placed: $${playerOne.Bet} <br></br> GG ALL IN! <br></br>Let's play Blackjack! Hit Submit to Deal!`;
+        outputMessage = `Bet Placed: $${playerOne.Bet} <br></br> 🔥🔥🔥GG ALL IN! 🔥🔥🔥<br></br>Let's play Blackjack! Hit Submit to Deal!`;
       } else {
         outputMessage = `Bet Placed: $${playerOne.Bet} <br></br> Let's play Blackjack! Hit Submit to Deal!`;
       }
@@ -185,38 +190,41 @@ const dealPhaseFunction = function () {
   outputMessage =
     playerHandCards +
     `<br></br>The Computer's first card is ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit}.<br> </br><br> </br>If you would like to Hit, please input 'h'.<br> </br>If you wish to Stand, input 's'`;
+  console.log(gameMode);
   return outputMessage;
 };
 
-// Player Action Function
-const playerHitOrStand = function (playerAction) {
+// Player Hit Function
+const playerHitAction = function () {
   console.log(playerOne.Hand);
   let drawPhaseOutput = "";
-  if (typeof playerAction === "string") {
-    playerInput = playerAction.toLowerCase();
-    if (playerInput === "h") {
-      playerOne.Hand.push(drawCard(gameDeck));
-      playerHandCards =
-        playerHandCards +
-        `, ${playerOne.Hand[playerOne.Hand.length - 1].name} ${
-          playerOne.Hand[playerOne.Hand.length - 1].suit
-        }`;
-      drawPhaseOutput = `You have drawn ${
-        playerOne.Hand[playerOne.Hand.length - 1].name
-      } ${
-        playerOne.Hand[playerOne.Hand.length - 1].suit
-      }. <br></br> ${playerHandCards}. <br></br>If you would like to draw another card, please input 'h'.<br></br>If not, input 's'.`;
-    } else if (playerInput === "s") {
-      drawPhaseOutput = `You have chosen to Stand. Click submit to see who won!`;
-      gameMode = cpuActionPhase;
-    } else {
-      drawPhaseOutput = `${playerHandCards}. <br></br>The Computer's first card is ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit}.<br> </br><br> </br>Please input either 'h' or 's'.`;
-    }
-  } else {
-    drawPhaseOutput = `${playerHandCards}. <br></br>The Computer's first card is ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit}.<br> </br><br> </br>Please input either 'h' or 's'.`;
-  }
-  console.log(gameMode);
-  return drawPhaseOutput;
+  playerOne.Hand.push(drawCard(gameDeck));
+  playerHandCards =
+    playerHandCards +
+    `, ${playerOne.Hand[playerOne.Hand.length - 1].name} ${
+      playerOne.Hand[playerOne.Hand.length - 1].suit
+    }`;
+  drawPhaseOutput = `You have drawn ${
+    playerOne.Hand[playerOne.Hand.length - 1].name
+  } ${
+    playerOne.Hand[playerOne.Hand.length - 1].suit
+  }. <br></br> ${playerHandCards}. <br></br>If you would like to draw another card, please press 'Hit' again.`;
+  var output = document.querySelector("#output-div");
+  output.innerHTML = drawPhaseOutput;
+};
+
+// Player Stand Function
+const playerStandAction = function () {
+  console.log("hi");
+  let drawPhaseOutput = "";
+  drawPhaseOutput = `You have chosen to Stand. Click submit to see who won!`;
+  gameMode = cpuActionPhase;
+  var output = document.querySelector("#output-div");
+  output.innerHTML = drawPhaseOutput;
+  var hitButton = document.querySelector("#hit-button");
+  hitButton = hitButton.remove();
+  var standButton = document.querySelector("#stand-button");
+  standButton.remove();
 };
 
 // CPU Action Function
@@ -342,12 +350,29 @@ const compareScore = function () {
 };
 
 // Create GIF element
+let loserCounter = 1;
 const gifCreate = function () {
   let gifElement = document.createElement("img");
   gifElement.src =
     "https://media.tenor.com/mZZoOtDcouoAAAAM/stop-it-get-some-help.gif";
+  gifElement.setAttribute("id", "gif1");
   let divElement = document.getElementById("container");
   divElement.appendChild(gifElement);
+};
+
+// Create 2nd GIF Element
+let gifCounter = 1;
+const gifCreatev2 = function () {
+  if (gifCounter === 1) {
+    let gifElement = document.getElementById("gif1");
+    gifElement.remove();
+  }
+  let gifElementv2 = document.createElement("img");
+  gifElementv2.src =
+    "https://preview.redd.it/xootmxfxet181.gif?s=a6b98cf0b3a8aa5acadf36df08ff25e537afaa4b";
+  let divElement = document.getElementById("container");
+  divElement.appendChild(gifElementv2);
+  gifCounter += 1;
 };
 
 // Define main function
@@ -357,6 +382,9 @@ const main = function (input) {
   if (gameMode === nameInputPhase) {
     outputMessage = nameInput(input);
     console.log(outputMessage);
+    // To delete the initial instructions to start the game once name is input :)
+    let openingTextElement = document.getElementById("Enter-your-name-text");
+    openingTextElement.remove();
     return outputMessage;
   } else if (gameMode === bankrollPhase) {
     outputMessage = bankrollInitialInput(input);
@@ -366,10 +394,22 @@ const main = function (input) {
     return outputMessage;
   } else if (gameMode === dealPhase) {
     outputMessage = dealPhaseFunction();
+    // Create button for Hit or Stand
+    var hitButton = document.createElement("button");
+    hitButton.setAttribute("id", "hit-button");
+    hitButton.innerText = "Hit";
+    let outputTextTag = document.getElementById("output-text");
+    container.insertBefore(hitButton, outputTextTag);
+    var standButton = document.createElement("button");
+    standButton.setAttribute("id", "stand-button");
+    standButton.innerText = "Stand";
+    container.insertBefore(standButton, outputTextTag);
+    hitButton.addEventListener("click", playerHitAction);
+    standButton.addEventListener("click", playerStandAction);
     console.log(cpuHandCards);
     return outputMessage;
   } else if (gameMode === playerActionPhase) {
-    outputMessage = playerHitOrStand(input);
+    outputMessage = `${playerHandCards}<br></br>Please use either the Hit or Stand buttons to choose your action.`;
     return outputMessage;
   } else if (gameMode === cpuActionPhase) {
     outputMessage = cpuHitOrStand();
@@ -377,7 +417,14 @@ const main = function (input) {
     return outputMessage;
   } else if ((gameMode = loserPhase)) {
     outputMessage = `You're just not that good, please stop gambling.`;
-    gifCreate();
+    if (loserCounter === 1) {
+      console.log(loserCounter);
+      gifCreate();
+      loserCounter += 1;
+    } else {
+      outputMessage = `I won't say it twice.`;
+      gifCreatev2();
+    }
     return outputMessage;
   }
 };

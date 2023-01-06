@@ -91,6 +91,11 @@
         box-sizing: border-box;
       }
 
+      h1 {
+        font-size: 480px;
+        color: white;
+      }
+
       body {
         font-family: "Open Sans", sans-serif;
         margin-left: 30px;
@@ -112,13 +117,17 @@
         text-align: center;
         font-size: 1.1rem;
         margin-bottom: 3rem;
+        -webkit-text-stroke: 1px #fff;
       }
 
       #container {
-        background-color: pink;
+        background-image: linear-gradient(rgb(12, 43, 4), rgb(16, 125, 16));
+        background-color: rgb(12, 43, 4);
         margin: 40px auto;
         max-width: 800px;
         padding: 38px 31px;
+        border-radius: 21px;
+        outline: inset rgb(143, 28, 28) 10px;
       }
 
       input {
@@ -127,6 +136,9 @@
         margin: 0 0 23px 0;
         padding: 0 9px;
         width: 100%;
+        background-color: rgb(8, 92, 8);
+        outline: solid rgb(255, 255, 149) 3px;
+        color: white;
       }
 
       button {
@@ -134,13 +146,19 @@
         line-height: 33px;
         margin: 0 0 23px 0;
         padding: 0 6px;
+        background-color: rgb(143, 28, 28);
+        color: white;
+        outline: inset rgb(255, 255, 149) 3px;
       }
 
       #output-div {
-        background-color: lightgrey;
+        background-color: rgb(8, 92, 8);
         margin: 20px auto;
         padding: 20px;
         width: 100%;
+        color: white;
+        font-size: 20px;
+        outline: solid rgb(255, 255, 149) 3px;
       }
 
       .logo-img {
@@ -149,11 +167,19 @@
         top: 22px;
       }
 
+      p {
+        color: white;
+        font-size: 20px;
+      }
+
       /* increase header font size on wider screens */
       @media screen and (min-width: 600px) {
         .header {
           font-size: 2rem;
         }
+      }
+      body {
+        background-image: url("https://filmdaily.co/wp-content/uploads/2020/09/blackjack-2-Licence-To-Kill.jpg");
       }
     </style>
   </head>
@@ -162,7 +188,7 @@
     <h1 class="header">
       <img
         class="logo-img"
-        src="https://media.tenor.com/8-8uOqPjsWkAAAAC/evil-pepe-evil.gif"
+        src="https://cdn-images.win.gg/wp/uploads/2021/12/Copium-Twitch.png"
       />
       DEGEN LANDS
       <img
@@ -172,11 +198,14 @@
     </h1>
     <h1 class="header">♣️ B L A C K J A C K ♠️</h1>
     <div id="container">
+      <p id="Enter-your-name-text">
+        Enter your name in the box below and hit 'Submit' to begin the game!
+      </p>
       <p>Input:</p>
       <input id="input-field" />
       <br />
       <button id="submit-button">Submit</button>
-      <p>Output:</p>
+      <p id="output-text">Output:</p>
       <div id="output-div"></div>
     </div>
     <!-- Import program logic -->
