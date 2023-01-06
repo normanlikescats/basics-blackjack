@@ -49,7 +49,6 @@ const nameInput = function (input) {
 // Bankroll Phase Function
 let roundCounter = 1;
 const bankrollInitialInput = function (input) {
-  console.log(roundCounter);
   let outputMessage = "";
   let playerInput = Number(input);
   if (isNaN(playerInput)) {
@@ -184,7 +183,7 @@ const dealPhaseFunction = function () {
   playerOne.Hand.push(drawCard(gameDeck));
   cpuObj.Hand.push(drawCard(gameDeck));
   cpuObj.Hand.push(drawCard(gameDeck));
-  console.log(playerOne.Hand);
+  playerOne.Hand = testHand;
   // Write out Player's Hand for Display Purposes
   playerHandCards = `Your cards are: ${playerOne.Hand[0].name} ${playerOne.Hand[0].suit}, ${playerOne.Hand[1].name} ${playerOne.Hand[1].suit}`;
   // Write out CPU's Hand for Display Purposes
@@ -237,7 +236,7 @@ const checkBlackjack = function () {
   // Check if CPU first card is Ace
   if (cpuObj.Hand[0].name === "Ace") {
     // Check if second card is any of the rank 10 cards
-    if (playerOne.Hand[1].rank === 10) {
+    if (cpuObj.Hand[1].rank === 10) {
       cpuBlackjackStatus = true;
     }
   }
@@ -290,13 +289,11 @@ const checkBlackjack = function () {
       playerOne.Bet = 0;
     }
   }
-  console.log(outputMessage);
   return outputMessage;
 };
 
 // Player Hit Function
 const playerHitAction = function () {
-  console.log(playerOne.Hand);
   let drawPhaseOutput = "";
   playerOne.Hand.push(drawCard(gameDeck));
   playerHandCards =
@@ -315,7 +312,6 @@ const playerHitAction = function () {
 
 // Player Stand Function
 const playerStandAction = function () {
-  console.log("hi");
   let drawPhaseOutput = "";
   drawPhaseOutput = `You have chosen to Stand. Click submit to see who won!`;
   gameMode = cpuActionPhase;
@@ -328,30 +324,22 @@ const playerStandAction = function () {
 const cpuHitOrStand = function () {
   let outputValue = "";
   let cpuScoreCounter = 0;
-  let cpuAceCounter = 0;
-  cpuObj.Hand.sort();
-  console.log(cpuObj.Hand);
-  // Compute CPU score
+  // Convert all Aces to 11
   while (cpuScoreCounter < cpuObj.Hand.length) {
-    // Handling 2 aces
-    console.log();
-    while (
-      cpuObj.Hand.length === 2 &&
-      cpuObj.Hand[cpuScoreCounter].name === "Ace" &&
-      cpuAceCounter === 0
-    ) {
-      console.log("we ran line 1");
+    if (cpuObj.Hand[cpuScoreCounter].name === "Ace") {
       cpuObj.Hand[cpuScoreCounter].rank = 11;
       cpuObj.Score += cpuObj.Hand[cpuScoreCounter].rank;
       cpuScoreCounter += 1;
-      cpuAceCounter += 1;
     }
-    console.log("we ran line2");
-    console.log(cpuObj.Hand);
-    console.log("cpu card 2 rank =" + cpuObj.Hand[cpuScoreCounter].rank);
     cpuObj.Score += cpuObj.Hand[cpuScoreCounter].rank;
     cpuScoreCounter += 1;
-    console.log(cpuObj.Score);
+  }
+  cpuScoreCounter = 0;
+  if (cpuObj.Score > 21) {
+    // This only happens when Two Aces are in hand, resulting in 22 points
+    cpuObj.Hand[0].rank = 1;
+    cpuObj.Score -= 10;
+    // Score will be 12 as a result lol
   }
   // While  CPU Score < 17, hit
   while (cpuObj.Score < 17) {
@@ -362,6 +350,15 @@ const cpuHitOrStand = function () {
       `, ${cpuObj.Hand[cpuObj.Hand.length - 1].name} ${
         cpuObj.Hand[cpuObj.Hand.length - 1].suit
       }`;
+    // Sort to bring Ace to last element in array
+    cpuObj.Hand.sort(function (a, b) {
+      return a.rank - b.rank;
+    });
+    // If CPU is bust and last card (highest card) is an Ace, turn Ace into 1
+    if (cpuObj.Score > 21 && cpuObj.Hand[cpuObj.Hand.length - 1].rank === 11) {
+      cpuObj.Hand[cpuObj.Hand.length - 1].rank = 1;
+      cpuObj.Score -= 10;
+    }
   }
   // Once CPU Score > 17, enter evaluation mode
   gameMode = compareScorePhase;
@@ -378,28 +375,40 @@ const removeButtons = function () {
   standButton.remove();
 };
 
-// Define Comparison Function
-const compareScore = function () {
-  console.log("line 160" + " compare score run");
-  let myOutputValue = "";
-  let playerAceCounter = 0;
-  // Sort Player's Hand to Find Aces
-  playerOne.Hand.sort(function (a, b) {
-    return a.rank - b.rank;
-  });
-  console.log(playerOne.Hand);
-  // Iterate through Player's Hand to compute score
+// Compute Player Score
+const computePlayerScore = function () {
   let playerScoreCounter = 0;
+  // Convert all Aces to 11 and count total score
   while (playerScoreCounter < playerOne.Hand.length) {
-    if (
-      playerOne.Hand[playerOne.Hand.length - 1].name === "Ace" &&
-      playerAceCounter === 0
-    ) {
-      playerOne.Hand[playerOne.Hand.length - 1].rank = 11;
+    if (playerOne.Hand[playerScoreCounter].name === "Ace") {
+      playerOne.Hand[playerScoreCounter].rank = 11;
+      playerOne.Score += playerOne.Hand[playerScoreCounter].rank;
+      playerScoreCounter += 1;
     }
     playerOne.Score += playerOne.Hand[playerScoreCounter].rank;
     playerScoreCounter += 1;
   }
+  console.log("player hand: " + playerOne.Hand);
+  playerOne.Hand.sort(function (a, b) {
+    return a.rank - b.rank;
+  });
+  playerOne.Hand.reverse();
+  console.log("player hand: ");
+  console.log(playerOne.Hand);
+  playerScoreCounter = 0;
+  if (playerOne.Score > 21 && playerOne.Hand[0].name === "Ace") {
+    console.log("minus mode");
+    playerOne.Hand[0].rank = 1;
+    playerOne.Score -= 10;
+  }
+};
+
+// Define Comparison Function
+const compareScore = function () {
+  console.log("line 160" + " compare score run");
+  let myOutputValue = "";
+  // Compute Player Score
+  computePlayerScore();
   console.log("player score: " + playerOne.Score);
   // Base Message to display both hands
   let baseMessage = `${cpuHandCards} (${cpuObj.Score} points)<br></br> ${playerHandCards} (${playerOne.Score} points)<br></br>`;
@@ -486,10 +495,8 @@ const gifCreatev2 = function () {
 // Define main function
 const main = function (input) {
   let outputMessage = "";
-  console.log(gameMode);
   if (gameMode === nameInputPhase) {
     outputMessage = nameInput(input);
-    console.log(outputMessage);
     // To delete the initial instructions to start the game once name is input :)
     let openingTextElement = document.getElementById("Enter-your-name-text");
     openingTextElement.remove();
@@ -528,3 +535,16 @@ const main = function (input) {
     return outputMessage;
   }
 };
+
+let testHand = [
+  (card2 = {
+    name: 2,
+    rank: 2,
+    suit: "spades",
+  }),
+  (card1 = {
+    name: "Ace",
+    rank: 1,
+    suit: "clubs",
+  }),
+];
