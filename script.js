@@ -6,10 +6,10 @@ let numberOfPlayers = 0;
 let createPlayerObj = function (input) {
   let playerInput = Number(input);
   if (isNaN(playerInput)) {
-    console.log("running");
     outputMessage = `Please insert a number for the number of players.`;
   } else {
     numberOfPlayers = playerInput;
+    // For Loop to create a player object for every player
     for (let counter = 0; counter < numberOfPlayers; counter += 1) {
       playerArray[counter] = {
         Name: "",
@@ -19,7 +19,7 @@ let createPlayerObj = function (input) {
         Bet: 0,
       };
     }
-    outputMessage = `You have selected ${numberOfPlayers} players. Let's introduce ourselves, shall we?<br></br> Player 1, what is your name?`;
+    outputMessage = `You have selected ${numberOfPlayers} player(s). Let's introduce ourselves, shall we?<br></br> Player 1, what is your name?`;
     // To delete the initial instructions to start the game once number of players is input :)
     let openingTextElement = document.getElementById("Enter-your-name-text");
     openingTextElement.remove();
@@ -65,43 +65,68 @@ let nameCounter = 0;
 const nameInput = function (input, nameCounter) {
   let outputMessage = "";
   playerArray[nameCounter].Name = input;
-  if (nameCounter < numberOfPlayers - 1) {
-    console.log("counter: " + nameCounter);
-    outputMessage = `Welcome ${
-      playerArray[nameCounter].Name
-    }, let's play Blackjack! <br></br> Player ${
-      nameCounter + 2
-    }, what's your name?`;
-    console.log(nameCounter);
-  } else {
-    console.log("lfg");
-    outputMessage = `Welcome ${playerArray[nameCounter].Name}, let's play Blackjack! <br></br> Let's decide our bankrolls. ${playerArray[0].Name}, what will your initial bankroll be?`;
+  // If singleplayer
+  if (numberOfPlayers === 1) {
+    outputMessage = `Welcome ${playerArray[nameCounter].Name}, let's play Blackjack!<br></br> Enter your initial bankroll!`;
     gameMode = bankrollPhase;
+  }
+  // If multiplayer
+  if (nameCounter <= numberOfPlayers - 1) {
+    outputMessage = `Welcome ${playerArray[nameCounter].Name}, let's play Blackjack!`;
+  }
+  if (nameCounter === numberOfPlayers - 1) {
+    outputMessage += `<br></br> Let's decide our bankrolls. ${playerArray[0].Name}, what will your initial bankroll be?`;
+    gameMode = bankrollPhase;
+  } else if (nameCounter < numberOfPlayers - 1) {
+    outputMessage += `<br></br> Player ${nameCounter + 2}, what's your name?`;
   }
   return outputMessage;
 };
 
 // Bankroll Phase Function
+let bankrollCounter = 0;
+let bankrollError = false;
 let roundCounter = 1;
-const bankrollInitialInput = function (input) {
+const bankrollInitialInput = function (input, bankrollCounter) {
   let outputMessage = "";
   let playerInput = Number(input);
   if (isNaN(playerInput)) {
     outputMessage = `Please insert a number for your initial bankroll.`;
-  } else {
+    bankrollError = true;
+  } else if (bankrollCounter < numberOfPlayers - 1) {
     if (roundCounter === 1) {
       // Initial Bankroll for Round 1
       if (playerInput <= 0) {
         outputMessage = `Please insert a number larger than 0.`;
       } else {
-        playerOne.Bankroll = playerInput;
-        gameMode = betPhase;
-        outputMessage = `Initial Bankroll: $${playerOne.Bankroll} <br></br> Please place your bet for the first round.`;
-        roundCounter += 1;
+        playerArray[bankrollCounter].Bankroll = playerInput;
+        outputMessage = `Hi ${
+          playerArray[bankrollCounter].Name
+        }, your initial Bankroll is: $${
+          playerArray[bankrollCounter].Bankroll
+        } <br></br> ${
+          playerArray[bankrollCounter + 1].Name
+        }, please enter your bankroll.`;
       }
     } else {
       // For bet placing on Round 2 onwards
-      outputMessage = `Current Bankroll: $${playerOne.Bankroll} <br></br> Please place your bet for the first round.`;
+      outputMessage = `${playerArray[bankrollCounter].Name}, your current Bankroll is: $${playerArray[bankrollCounter].Bankroll} <br></br> Please place your bet for the next round.`;
+      gameMode = betPhase;
+    }
+  } else {
+    if (roundCounter === 1) {
+      // Initial Bankroll for Round 1
+      if (playerInput <= 0) {
+        outputMessage = `Please insert a number larger than 0.`;
+        bankrollError = true;
+      } else {
+        playerArray[bankrollCounter].Bankroll = playerInput;
+        outputMessage = `Hi ${playerArray[bankrollCounter].Name}, your initial Bankroll is: $${playerArray[bankrollCounter].Bankroll} <br></br> Let's place our bets! <br></br> ${playerArray[0].Name}, please key in your bet!`;
+        gameMode = betPhase;
+      }
+    } else {
+      // For bet placing on Round 2 onwards
+      outputMessage = `${playerArray[0].Name}, your current Bankroll is: $${playerArray[0].Bankroll} <br></br> Please place your bet for the next round.`;
       gameMode = betPhase;
     }
   }
@@ -109,23 +134,50 @@ const bankrollInitialInput = function (input) {
 };
 
 // Bet Phase Function
-const betInput = function (input) {
+let betCounter = 0;
+let betError = false;
+const betInput = function (input, betCounter) {
   let outputMessage = "";
+  console.log(betCounter);
   if (isNaN(Number(input))) {
+    // Check if number
     outputMessage = `Please insert a number for your initial bet.`;
-  } else {
-    if (Number(input) > playerOne.Bankroll) {
-      outputMessage = `Your bet cannot be larger than your initial bankroll. Please re-enter your bet for the first round. Your initial bankroll is $${playerOne.Bankroll}.`;
-    } else if (Number(input) <= 0) {
-      outputMessage = `Please enter a number larger than 0.`;
+    betError = true;
+  } else if (Number(input) > playerArray[betCounter].Bankroll) {
+    // Check if bet < bankroll
+    outputMessage = `Your bet cannot be larger than your initial bankroll. Please re-enter your bet for the first round. Your initial bankroll is $${playerArray[betCounter].Bankroll}.`;
+    betError = true;
+  } else if (Number(input) <= 0) {
+    // Check if bet > 0
+    outputMessage = `Please enter a number larger than 0.`;
+    betError = true;
+  } else if (betCounter < numberOfPlayers - 1) {
+    playerArray[betCounter].Bet = Number(input);
+    // Assign bets for all players
+    if (playerArray[betCounter].Bet === playerArray[betCounter].Bankroll) {
+      // if all-in
+      outputMessage = `${playerArray[betCounter].Name}'s Bet: $${
+        playerArray[betCounter].Bet
+      } <br></br> 🔥🔥🔥GG ALL IN! 🔥🔥🔥<br></br> ${
+        playerArray[betCounter + 1].Name
+      }, please enter your bet!`;
     } else {
-      playerOne.Bet = Number(input);
+      // normal bet size
+      outputMessage = `${playerArray[betCounter].Name}'s Bet: $${
+        playerArray[betCounter].Bet
+      } <br></br> ${playerArray[betCounter + 1].Name}, please enter your bet!`;
+    }
+  } else {
+    playerArray[betCounter].Bet = Number(input);
+    // for last player
+    if (playerArray[betCounter].Bet === playerArray[betCounter].Bankroll) {
+      // if all-in
+      outputMessage = `${playerArray[betCounter].Name}'s Bet: $${playerArray[betCounter].Bet} <br></br> 🔥🔥🔥GG ALL IN! 🔥🔥🔥<br></br>Let's play Blackjack! Hit Submit to Deal!`;
       gameMode = dealPhase;
-      if (playerOne.Bet === playerOne.Bankroll) {
-        outputMessage = `Bet Placed: $${playerOne.Bet} <br></br> 🔥🔥🔥GG ALL IN! 🔥🔥🔥<br></br>Let's play Blackjack! Hit Submit to Deal!`;
-      } else {
-        outputMessage = `Bet Placed: $${playerOne.Bet} <br></br> Let's play Blackjack! Hit Submit to Deal!`;
-      }
+    } else {
+      // normal bet size
+      outputMessage = `${playerArray[betCounter].Name}'s Bet: $${playerArray[betCounter].Bet} <br></br> Let's play Blackjack! Hit Submit to Deal!`;
+      gameMode = dealPhase;
     }
   }
   return outputMessage;
@@ -537,10 +589,17 @@ const main = function (input) {
     nameCounter += 1;
     return outputMessage;
   } else if (gameMode === bankrollPhase) {
-    outputMessage = bankrollInitialInput(input);
+    console.log(bankrollCounter);
+    outputMessage = bankrollInitialInput(input, bankrollCounter);
+    if (bankrollError === false) {
+      bankrollCounter += 1;
+    }
     return outputMessage;
   } else if (gameMode === betPhase) {
-    outputMessage = betInput(input);
+    outputMessage = betInput(input, betCounter);
+    if (betError === false) {
+      betCounter += 1;
+    }
     return outputMessage;
   } else if (gameMode === dealPhase) {
     outputMessage = dealPhaseFunction();
@@ -556,6 +615,7 @@ const main = function (input) {
   } else if (gameMode === cpuActionPhase) {
     outputMessage = cpuHitOrStand();
     console.log(gameMode);
+    roundCounter += 1;
     return outputMessage;
   } else if ((gameMode = loserPhase)) {
     outputMessage = `You're just not that good, please stop gambling.`;
