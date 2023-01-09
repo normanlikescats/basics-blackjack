@@ -1,9 +1,31 @@
-// Define Player Object
-let playerOne = {
-  Hand: [],
-  Score: 0,
-  Bankroll: 0,
-  Bet: 0,
+// Define Player Array: To Hold All Players
+let playerArray = [];
+let numberOfPlayers = 0;
+
+// Fill Player Array Function
+let createPlayerObj = function (input) {
+  let playerInput = Number(input);
+  if (isNaN(playerInput)) {
+    console.log("running");
+    outputMessage = `Please insert a number for the number of players.`;
+  } else {
+    numberOfPlayers = playerInput;
+    for (let counter = 0; counter < numberOfPlayers; counter += 1) {
+      playerArray[counter] = {
+        Name: "",
+        Hand: [],
+        Score: 0,
+        Bankroll: 0,
+        Bet: 0,
+      };
+    }
+    outputMessage = `You have selected ${numberOfPlayers} players. Let's introduce ourselves, shall we?<br></br> Player 1, what is your name?`;
+    // To delete the initial instructions to start the game once number of players is input :)
+    let openingTextElement = document.getElementById("Enter-your-name-text");
+    openingTextElement.remove();
+    gameMode = nameInputPhase;
+  }
+  return outputMessage;
 };
 
 // Define Computer Variables
@@ -20,6 +42,7 @@ let playerHandCards = "";
 let cpuHandCards = "";
 
 // Define Game Modes
+const playerNumPhase = "playerNumPhase";
 const nameInputPhase = "nameInputPhase";
 const bankrollPhase = "bankrollPhase";
 const betPhase = "betPhase";
@@ -28,7 +51,7 @@ const playerActionPhase = "playerActionPhase";
 const cpuActionPhase = "cpuActionPhase";
 const compareScorePhase = "compareScorePhase";
 const loserPhase = "loserPhase";
-let gameMode = nameInputPhase;
+let gameMode = playerNumPhase;
 
 // Define Make Deck Function
 const suits = ["♠️", "♥️", "♣️", "♦️"];
@@ -38,11 +61,23 @@ let deckOverallCounter = 1;
 let deckInnerCounter = 1;
 
 // Name Input Function
-const nameInput = function (input) {
+let nameCounter = 0;
+const nameInput = function (input, nameCounter) {
   let outputMessage = "";
-  playerOne.name = input;
-  gameMode = bankrollPhase;
-  outputMessage = `Welcome ${playerOne.name}, let's play Blackjack! <br></br> What will your initial bankroll be?`;
+  playerArray[nameCounter].Name = input;
+  if (nameCounter < numberOfPlayers - 1) {
+    console.log("counter: " + nameCounter);
+    outputMessage = `Welcome ${
+      playerArray[nameCounter].Name
+    }, let's play Blackjack! <br></br> Player ${
+      nameCounter + 2
+    }, what's your name?`;
+    console.log(nameCounter);
+  } else {
+    console.log("lfg");
+    outputMessage = `Welcome ${playerArray[nameCounter].Name}, let's play Blackjack! <br></br> Let's decide our bankrolls. ${playerArray[0].Name}, what will your initial bankroll be?`;
+    gameMode = bankrollPhase;
+  }
   return outputMessage;
 };
 
@@ -494,11 +529,12 @@ const gifCreatev2 = function () {
 // Define main function
 const main = function (input) {
   let outputMessage = "";
-  if (gameMode === nameInputPhase) {
-    outputMessage = nameInput(input);
-    // To delete the initial instructions to start the game once name is input :)
-    let openingTextElement = document.getElementById("Enter-your-name-text");
-    openingTextElement.remove();
+  if (gameMode === playerNumPhase) {
+    outputMessage = createPlayerObj(input);
+    return outputMessage;
+  } else if (gameMode === nameInputPhase) {
+    outputMessage = nameInput(input, nameCounter);
+    nameCounter += 1;
     return outputMessage;
   } else if (gameMode === bankrollPhase) {
     outputMessage = bankrollInitialInput(input);
