@@ -4,9 +4,11 @@ let numberOfPlayers = 0;
 
 // Fill Player Array Function
 let createPlayerObj = function (input) {
-  let playerInput = Number(input);
+  let playerInput = Math.round(Number(input));
   if (isNaN(playerInput)) {
     outputMessage = `Please insert a number for the number of players.`;
+  } else if (playerInput <= 0) {
+    outputMessage = `Please insert a number larger than 0 for the number of players.`;
   } else {
     numberOfPlayers = playerInput;
     // For Loop to create a player object for every player
@@ -140,7 +142,6 @@ let betCounter = 0;
 let betError = false;
 const betInput = function (input, betCounter) {
   let outputMessage = "";
-  console.log(betCounter);
   if (isNaN(Number(input))) {
     // Check if number
     outputMessage = `Please insert a number for your initial bet.`;
@@ -417,7 +418,6 @@ const playerHitAction = function () {
 // Player Stand Function
 const playerStandAction = function () {
   let drawPhaseOutput = "";
-  console.log("action counter: " + actionCounter);
   if (actionCounter < numberOfPlayers - 1) {
     drawPhaseOutput = `You have chosen to Stand. <br></br> Time for ${
       playerArray[actionCounter + 1].Name
@@ -426,7 +426,6 @@ const playerStandAction = function () {
     }. <br></br> Press 'Hit' to draw a card or press 'Stand' if you're already satisfied with your hand.`;
     actionCounter += 1;
   } else if (actionCounter === numberOfPlayers - 1) {
-    console.log("closing");
     drawPhaseOutput = `You have chosen to Stand. Hit 'Submit' to see who won!`;
     gameMode = cpuActionPhase;
     removeButtons();
@@ -478,6 +477,7 @@ const cpuHitOrStand = function () {
   // Once CPU Score > 17, enter evaluation mode
   gameMode = compareScorePhase;
   console.log(gameMode);
+  computeAllPlayersScore();
   outputValue = compareScore();
   return outputValue;
 };
@@ -491,93 +491,182 @@ const removeButtons = function () {
 };
 
 // Compute Player Score
-const computePlayerScore = function () {
+const computePlayerScore = function (counter) {
   let playerScoreCounter = 0;
   // Convert all Aces to 11 and count total score
-  while (playerScoreCounter < playerOne.Hand.length) {
-    if (playerOne.Hand[playerScoreCounter].name === "Ace") {
-      playerOne.Hand[playerScoreCounter].rank = 11;
-      playerOne.Score += playerOne.Hand[playerScoreCounter].rank;
+  while (playerScoreCounter < playerArray[counter].Hand.length) {
+    if (playerArray[counter].Hand[playerScoreCounter].name === "Ace") {
+      playerArray[counter].Hand[playerScoreCounter].rank = 11;
+      playerArray[counter].Score +=
+        playerArray[counter].Hand[playerScoreCounter].rank;
       playerScoreCounter += 1;
     }
-    playerOne.Score += playerOne.Hand[playerScoreCounter].rank;
+    playerArray[counter].Score +=
+      playerArray[counter].Hand[playerScoreCounter].rank;
     playerScoreCounter += 1;
   }
-  console.log("player hand: " + playerOne.Hand);
-  playerOne.Hand.sort(function (a, b) {
+  // Sort hand to arrange Aces in front
+  playerArray[counter].Hand.sort(function (a, b) {
     return a.rank - b.rank;
   });
-  playerOne.Hand.reverse();
-  console.log("player hand: ");
-  console.log(playerOne.Hand);
+  playerArray[counter].Hand.reverse();
+  // Reset counter
   playerScoreCounter = 0;
-  if (playerOne.Score > 21 && playerOne.Hand[0].name === "Ace") {
+  // If bust, Ace converts down to 1 point to prevent bust
+  if (
+    playerArray[counter].Score > 21 &&
+    playerArray[counter].Hand[0].name === "Ace"
+  ) {
     console.log("minus mode");
-    playerOne.Hand[0].rank = 1;
-    playerOne.Score -= 10;
+    playerArray[counter].Hand[0].rank = 1;
+    playerArray[counter].Score -= 10;
   }
 };
 
-// Define Comparison Function
-const compareScore = function () {
+// Define Computation Function
+let scoreCounter = 0;
+let allBust = true;
+const computeAllPlayersScore = function () {
   console.log("line 160" + " compare score run");
-  let myOutputValue = "";
   // Compute Player Score
-  computePlayerScore();
-  console.log("player score: " + playerOne.Score);
+  computePlayerScore(scoreCounter);
+  console.log(
+    `player ${scoreCounter} score: ${playerArray[scoreCounter].Score}`
+  );
+};
+
+// Define Compare Function
+const compareScore = function () {
   // Base Message to display both hands
-  let baseMessage = `${cpuHandCards} (${cpuObj.Score} points)<br></br> ${playerHandCards} (${playerOne.Score} points)<br></br>`;
-  // Check for > 21 points
-  if (playerOne.Score > 21 && cpuObj.Score > 21) {
-    myOutputValue =
-      baseMessage +
-      `Both player and dealer are bust! It's a tie!<br></br>Your remaining bankroll is $${playerOne.Bankroll}.`;
-  } else if (playerOne.Score > 21 && cpuObj.Score < 22) {
-    playerOne.Bankroll = playerOne.Bankroll - playerOne.Bet;
-    myOutputValue =
-      baseMessage +
-      `You are bust! You lost! <br></br>Your remaining bankroll is $${playerOne.Bankroll}.`;
-  } else if (playerOne.Score < 22 && cpuObj.Score > 21) {
-    playerOne.Bankroll = playerOne.Bankroll + playerOne.Bet;
-    myOutputValue =
-      baseMessage +
-      `The dealer is bust! You won! <br></br>Your remaining bankroll is $${playerOne.Bankroll}.`;
-  } else {
-    if (playerOne.Score > cpuObj.Score) {
-      // Player wins
-      playerOne.Bankroll = playerOne.Bankroll + playerOne.Bet;
+  let baseMessage = `${cpuHandCards} (${cpuObj.Score} points)<br></br> ${playerArray[scoreCounter].HandText} (${playerArray[scoreCounter].Score} points)<br></br>`;
+  if (scoreCounter < numberOfPlayers - 1) {
+    // Check for > 21 points
+    if (playerArray[scoreCounter].Score > 21 && cpuObj.Score > 21) {
       myOutputValue =
         baseMessage +
-        `You won!<br></br>Your remaining bankroll is $${playerOne.Bankroll}.`;
-    } else if (playerOne.Score < cpuObj.Score) {
-      playerOne.Bankroll = playerOne.Bankroll - playerOne.Bet;
-      // Player loses
+        `Both ${playerArray[scoreCounter].Name} and dealer are bust! It's a tie!<br></br>Your remaining bankroll is $${playerArray[scoreCounter].Bankroll}.`;
+    } else if (playerArray[scoreCounter].Score > 21 && cpuObj.Score < 22) {
+      playerArray[scoreCounter].Bankroll =
+        playerArray[scoreCounter].Bankroll - playerArray[scoreCounter].Bet;
       myOutputValue =
         baseMessage +
-        `You lost!<br></br>Your remaining bankroll is $${playerOne.Bankroll}.`;
+        `${playerArray[scoreCounter].Name}, you are bust! You lost! <br></br>Your remaining bankroll is $${playerArray[scoreCounter].Bankroll}.`;
+    } else if (playerArray[scoreCounter].Score < 22 && cpuObj.Score > 21) {
+      playerArray[scoreCounter].Bankroll =
+        playerArray[scoreCounter].Bankroll + playerArray[scoreCounter].Bet;
+      myOutputValue =
+        baseMessage +
+        `The dealer is bust! ${playerArray[scoreCounter].Name}, you won! <br></br>Your remaining bankroll is $${playerArray[scoreCounter].Bankroll}.`;
     } else {
-      // Same value, tied
+      if (playerArray[scoreCounter].Score > cpuObj.Score) {
+        // Player wins
+        playerArray[scoreCounter].Bankroll =
+          playerArray[scoreCounter].Bankroll + playerArray[scoreCounter].Bet;
+        myOutputValue =
+          baseMessage +
+          `${playerArray[scoreCounter].Name}, you won!<br></br>Your remaining bankroll is $${playerArray[scoreCounter].Bankroll}.`;
+      } else if (playerArray[scoreCounter].Score < cpuObj.Score) {
+        playerArray[scoreCounter].Bankroll =
+          playerArray[scoreCounter].Bankroll - playerArray[scoreCounter].Bet;
+        // Player loses
+        myOutputValue =
+          baseMessage +
+          `${playerArray[scoreCounter].Name}, you lost!<br></br>Your remaining bankroll is $${playerArray[scoreCounter].Bankroll}.`;
+      } else {
+        // Same value, tied
+        myOutputValue =
+          baseMessage +
+          `It's a tie, ${playerArray[scoreCounter].Name}! <br></br>Your remaining bankroll is $${playerArray[scoreCounter].Bankroll}.`;
+      }
+    }
+    if (playerArray[scoreCounter].Bankroll === 0) {
+      myOutputValue =
+        myOutputValue +
+        `<br></br>Your bankroll is now $0. Thanks for playing :) <br></br>Hit Submit for ${
+          playerArray[scoreCounter + 1].Name
+        }'s turn!`;
+      scoreCounter += 1;
+    } else {
+      myOutputValue =
+        myOutputValue +
+        `<br></br>Hit Submit for ${playerArray[scoreCounter + 1].Name}'s turn!`;
+      scoreCounter += 1;
+    }
+  } else if (scoreCounter === numberOfPlayers - 1) {
+    if (playerArray[scoreCounter].Score > 21 && cpuObj.Score > 21) {
       myOutputValue =
         baseMessage +
-        `It's a tie! <br></br>Your remaining bankroll is $${playerOne.Bankroll}.`;
+        `Both ${playerArray[scoreCounter].Name} and dealer are bust! It's a tie!<br></br>Your remaining bankroll is $${playerArray[scoreCounter].Bankroll}.`;
+    } else if (playerArray[scoreCounter].Score > 21 && cpuObj.Score < 22) {
+      playerArray[scoreCounter].Bankroll =
+        playerArray[scoreCounter].Bankroll - playerArray[scoreCounter].Bet;
+      myOutputValue =
+        baseMessage +
+        `${playerArray[scoreCounter].Name}, you are bust! You lost! <br></br>Your remaining bankroll is $${playerArray[scoreCounter].Bankroll}.`;
+    } else if (playerArray[scoreCounter].Score < 22 && cpuObj.Score > 21) {
+      playerArray[scoreCounter].Bankroll =
+        playerArray[scoreCounter].Bankroll + playerArray[scoreCounter].Bet;
+      myOutputValue =
+        baseMessage +
+        `The dealer is bust! ${playerArray[scoreCounter].Name}, you won! <br></br>Your remaining bankroll is $${playerArray[scoreCounter].Bankroll}.`;
+    } else {
+      if (playerArray[scoreCounter].Score > cpuObj.Score) {
+        // Player wins
+        playerArray[scoreCounter].Bankroll =
+          playerArray[scoreCounter].Bankroll + playerArray[scoreCounter].Bet;
+        myOutputValue =
+          baseMessage +
+          `${playerArray[scoreCounter].Name}, you won!<br></br>Your remaining bankroll is $${playerArray[scoreCounter].Bankroll}.`;
+      } else if (playerArray[scoreCounter].Score < cpuObj.Score) {
+        playerArray[scoreCounter].Bankroll =
+          playerArray[scoreCounter].Bankroll - playerArray[scoreCounter].Bet;
+        // Player loses
+        myOutputValue =
+          baseMessage +
+          `${playerArray[scoreCounter].Name}, you lost!<br></br>Your remaining bankroll is $${playerArray[scoreCounter].Bankroll}.`;
+      } else {
+        // Same value, tied
+        myOutputValue =
+          baseMessage +
+          `It's a tie, ${playerArray[scoreCounter].Name}! <br></br>Your remaining bankroll is $${playerArray[scoreCounter].Bankroll}.`;
+      }
+    }
+    if (playerArray[scoreCounter].Bankroll === 0) {
+      myOutputValue =
+        myOutputValue +
+        `<br></br>Your bankroll is now $0. Thanks for playing :) <br></br>Hit Submit for another round of Blackjack!`;
+      scoreCounter += 1;
+    } else {
+      myOutputValue =
+        myOutputValue + `<br></br>Hit Submit for another round of Blackjack!`;
+      scoreCounter += 1;
     }
   }
-  if (playerOne.Bankroll === 0) {
-    myOutputValue =
-      myOutputValue + `<br></br>Your bankroll is now $0. Thanks for playing :)`;
-    gameMode = loserPhase;
-  } else {
-    myOutputValue =
-      myOutputValue + `<br></br>Hit Submit to go for another round!`;
-    gameMode = bankrollPhase;
-  }
   console.log(myOutputValue);
-  // Reset game for another round
-  playerOne.Hand = [];
-  cpuObj.Hand = [];
-  playerOne.Score = 0;
-  cpuObj.Score = 0;
-  playerOne.Bet = 0;
+  // Check if any player is still playing (i.e. Bankroll > 0)
+  for (let counter = 0; counter < numberOfPlayers; counter += 1) {
+    if (playerArray[counter].Bankroll === 0) {
+      // Drop players that are Bankroll = 0
+      playerArray.splice(counter, 1);
+      console.log(playerArray);
+    } else {
+      // Change the allBust state to allow next round to continue
+      allBust = false;
+    }
+  }
+  if ((allBust = false)) {
+    // Go back to betting stage if there are available players
+    gameMode = bankrollPhase;
+    // reset all other variables
+    cpuObj.Hand = [];
+    cpuObj.Score = 0;
+    roundCounter += 1;
+    for (let counter = 0; counter < playerArray.length; counter += 1) {
+      playerArray[counter].Hand = [];
+      playerArray[counter].Score = 0;
+      playerArray[counter].Bet = 0;
+    }
+  }
   return myOutputValue;
 };
 
@@ -618,7 +707,6 @@ const main = function (input) {
     nameCounter += 1;
     return outputMessage;
   } else if (gameMode === bankrollPhase) {
-    console.log(bankrollCounter);
     outputMessage = bankrollInitialInput(input, bankrollCounter);
     if (bankrollError === false) {
       bankrollCounter += 1;
@@ -641,14 +729,18 @@ const main = function (input) {
     console.log(cpuHandCards);
     return outputMessage;
   } else if (gameMode === playerActionPhase) {
-    outputMessage = `${playerHandCards}<br></br>Please use either the Hit or Stand buttons to choose your action.`;
+    console.log(actionCounter);
+    outputMessage = `${playerArray[actionCounter].HandText}<br></br>Please use either the Hit or Stand buttons to choose your action.`;
     return outputMessage;
   } else if (gameMode === cpuActionPhase) {
     outputMessage = cpuHitOrStand();
     console.log(gameMode);
-    roundCounter += 1;
     return outputMessage;
-  } else if ((gameMode = loserPhase)) {
+  } else if (gameMode === compareScorePhase) {
+    computeAllPlayersScore();
+    outputMessage = compareScore();
+    return outputMessage;
+  } else if (gameMode === loserPhase) {
     outputMessage = `You're just not that good, please stop gambling.`;
     if (loserCounter === 1) {
       console.log(loserCounter);
