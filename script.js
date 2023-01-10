@@ -17,6 +17,8 @@ let createPlayerObj = function (input) {
         Score: 0,
         Bankroll: 0,
         Bet: 0,
+        HandText: "",
+        Blackjack: false,
       };
     }
     outputMessage = `You have selected ${numberOfPlayers} player(s). Let's introduce ourselves, shall we?<br></br> Player 1, what is your name?`;
@@ -266,57 +268,64 @@ const dealPhaseFunction = function () {
   let unshuffledDeck = generateDeck();
   gameDeck = shuffleDeck(unshuffledDeck);
   // Draw Cards
-  playerOne.Hand.push(drawCard(gameDeck));
-  playerOne.Hand.push(drawCard(gameDeck));
   cpuObj.Hand.push(drawCard(gameDeck));
   cpuObj.Hand.push(drawCard(gameDeck));
-  // Write out Player's Hand for Display Purposes
-  playerHandCards = `Your cards are: ${playerOne.Hand[0].name} ${playerOne.Hand[0].suit}, ${playerOne.Hand[1].name} ${playerOne.Hand[1].suit}`;
   // Write out CPU's Hand for Display Purposes
   cpuHandCards = `The Computer's cards are: ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit}, ${cpuObj.Hand[1].name} ${cpuObj.Hand[1].suit}`;
+  for (let counter = 0; counter < numberOfPlayers; counter += 1) {
+    // Iterate through all players and deal 2 cards each
+    playerArray[counter].Hand.push(drawCard(gameDeck));
+    playerArray[counter].Hand.push(drawCard(gameDeck));
+    // Write out Player's Hand for Display Purposes
+    playerArray[
+      counter
+    ].HandText = `${playerArray[counter].Name}, your cards are: ${playerArray[counter].Hand[0].name} ${playerArray[counter].Hand[0].suit}, ${playerArray[counter].Hand[1].name} ${playerArray[counter].Hand[1].suit}`;
+  }
+  // Move to Action Phase once all cards are dealt
   gameMode = playerActionPhase;
   outputMessage =
-    playerHandCards +
-    `<br></br>The Computer's first card is ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit}.<br> </br><br> </br>If you would like to Hit, please input 'h'.<br> </br>If you wish to Stand, input 's'`;
-  console.log(gameMode);
+    `It's ${playerArray[0].Name}'s turn! <br></br>` +
+    playerArray[0].HandText +
+    `<br></br>The Computer's first card is ${cpuObj.Hand[0].name} ${cpuObj.Hand[0].suit}.<br> </br><br> </br>If you would like to Hit, please press 'Hit'.<br> </br>If you wish to Stand, please press 'Stand'.`;
   return outputMessage;
 };
 
 // Create Buttons for Hit or Stand
 const createButtons = function () {
-  // Create button for Hit or Stand
+  // Create button for Hit
   let hitButton = document.createElement("button");
   hitButton.setAttribute("id", "hit-button");
   hitButton.innerText = "Hit";
   let outputTextTag = document.getElementById("output-text");
   container.insertBefore(hitButton, outputTextTag);
+  // Create button for Stand
   let standButton = document.createElement("button");
   standButton.setAttribute("id", "stand-button");
   standButton.innerText = "Stand";
   container.insertBefore(standButton, outputTextTag);
+  // Assign Functions to Buttons on Click
   hitButton.addEventListener("click", playerHitAction);
   standButton.addEventListener("click", playerStandAction);
 };
 
 // Blackjack Function
-const checkBlackjack = function () {
-  let playerBlackjackStatus = false;
+const checkBlackjack = function (counter) {
   let cpuBlackjackStatus = false;
   // Sort Player and CPU Hand to check Blackjack conditions easily
-  playerOne.Hand.sort(function (a, b) {
+  playerArray[counter].Hand.sort(function (a, b) {
     return a.rank - b.rank;
   });
   cpuObj.Hand.sort(function (a, b) {
     return a.rank - b.rank;
   });
   // Check if Player first card is Ace
-  if (playerOne.Hand[0].name === "Ace") {
+  if (playerArray[counter].Hand[0].name === "Ace") {
     if (
       // Check if second card is any of the rank 10 cards
-      playerOne.Hand[1].rank === 10
+      playerArray[counter].Hand[1].rank === 10
     ) {
-      playerBlackjackStatus = true;
-      console.log(playerBlackjackStatus);
+      playerArray[counter].Blackjack = true;
+      console.log(playerArray[counter].Blackjack);
     }
   }
   // Check if CPU first card is Ace
@@ -326,72 +335,81 @@ const checkBlackjack = function () {
       cpuBlackjackStatus = true;
     }
   }
-  if (playerBlackjackStatus === true && cpuBlackjackStatus === false) {
+  if (playerArray[counter].Blackjack === true && cpuBlackjackStatus === false) {
     // Player Blackjack only. Player wins!
-    playerOne.Bankroll += playerOne.Bet * 1.5;
-    outputMessage = `${playerHandCards}<br></br>${cpuHandCards}<br></br>You got B L A C K J A C K! You won 1.5x your original bet!<br></br>Your current bankroll is $${playerOne.Bankroll} <br></br>Hit Submit to go for another round!`;
+    playerArray[counter].Bankroll += playerArray[counter].Bet * 1.5;
+    outputMessage = `${playerArray[counter].HandText}<br></br>${cpuHandCards}<br></br>You got B L A C K J A C K! You won 1.5x your original bet!<br></br>Your current bankroll is $${playerArray[counter].Bankroll} <br></br>Hit Submit to go for another round!`;
     gameMode = bankrollPhase;
     removeButtons();
-    playerOne.Hand = [];
-    cpuObj.Hand = [];
-    playerOne.Score = 0;
-    cpuObj.Score = 0;
-    playerOne.Bet = 0;
-  } else if (playerBlackjackStatus === true && cpuBlackjackStatus === true) {
+    playerArray[counter].Hand = [];
+    playerArray[counter].Score = 0;
+    playerArray[counter].Bet = 0;
+  } else if (
+    playerArray[counter].Blackjack === true &&
+    cpuBlackjackStatus === true
+  ) {
     // Both player and dealer Blackjack. Tie!
-    outputMessage = `${playerHandCards}<br></br>${cpuHandCards}<br></br>Both the dealer and player got B L A C K J A C K! It's a tie!<br></br>Your current bankroll is $${playerOne.Bankroll} <br></br>Hit Submit to go for another round!`;
+    outputMessage = `${playerArray[counter].HandText}<br></br>${cpuHandCards}<br></br>Both the dealer and player got B L A C K J A C K! It's a tie!<br></br>Your current bankroll is $${playerArray[counter].Bankroll} <br></br>Hit Submit to go for another round!`;
     gameMode = bankrollPhase;
     removeButtons();
-    playerOne.Hand = [];
-    cpuObj.Hand = [];
-    playerOne.Score = 0;
-    cpuObj.Score = 0;
-    playerOne.Bet = 0;
-  } else if (playerBlackjackStatus === false && cpuBlackjackStatus === true) {
+    playerArray[counter].Hand = [];
+    playerArray[counter].Score = 0;
+    playerArray[counter].Bet = 0;
+  } else if (
+    playerArray[counter].Blackjack === false &&
+    cpuBlackjackStatus === true
+  ) {
     // CPU Blackjack only. CPU wins!
-    playerOne.Bankroll -= playerOne.Bet;
-    outputMessage = `${playerHandCards}<br></br>${cpuHandCards}<br></br>The computer got B L A C K J A C K! You lost!`;
-    if (playerOne.Bankroll === 0) {
+    playerArray[counter].Bankroll -= playerArray[counter].Bet;
+    outputMessage = `${playerArray[counter].HandText}<br></br>${cpuHandCards}<br></br>The computer got B L A C K J A C K! You lost!`;
+    if (playerArray[counter].Bankroll === 0) {
       outputMessage =
         outputMessage +
         `<br></br>Your bankroll is now $0. Thanks for playing :)`;
       gameMode = loserPhase;
       removeButtons();
-      playerOne.Hand = [];
-      cpuObj.Hand = [];
-      playerOne.Score = 0;
-      cpuObj.Score = 0;
-      playerOne.Bet = 0;
+      playerArray[counter].Hand = [];
+      playerArray[counter].Score = 0;
+      playerArray[counter].Bet = 0;
     } else {
       outputMessage =
         outputMessage +
         `Your current bankroll is $${playerOne.Bankroll} <br></br>Hit Submit to go for another round!`;
       gameMode = bankrollPhase;
       removeButtons();
-      playerOne.Hand = [];
-      cpuObj.Hand = [];
-      playerOne.Score = 0;
-      cpuObj.Score = 0;
-      playerOne.Bet = 0;
+      playerArray[counter].Hand = [];
+      playerArray[counter].Score = 0;
+      playerArray[counter].Bet = 0;
     }
   }
   return outputMessage;
 };
 
 // Player Hit Function
+let actionCounter = 0;
 const playerHitAction = function () {
   let drawPhaseOutput = "";
-  playerOne.Hand.push(drawCard(gameDeck));
-  playerHandCards =
-    playerHandCards +
-    `, ${playerOne.Hand[playerOne.Hand.length - 1].name} ${
-      playerOne.Hand[playerOne.Hand.length - 1].suit
+  playerArray[actionCounter].Hand.push(drawCard(gameDeck));
+  playerArray[actionCounter].HandText =
+    playerArray[actionCounter].HandText +
+    `, ${
+      playerArray[actionCounter].Hand[
+        playerArray[actionCounter].Hand.length - 1
+      ].name
+    } ${
+      playerArray[actionCounter].Hand[
+        playerArray[actionCounter].Hand.length - 1
+      ].suit
     }`;
-  drawPhaseOutput = `You have drawn ${
-    playerOne.Hand[playerOne.Hand.length - 1].name
+  drawPhaseOutput = `${playerArray[actionCounter].Name}, you have drawn ${
+    playerArray[actionCounter].Hand[playerArray[actionCounter].Hand.length - 1]
+      .name
   } ${
-    playerOne.Hand[playerOne.Hand.length - 1].suit
-  }. <br></br> ${playerHandCards}. <br></br>If you would like to draw another card, please press 'Hit' again.`;
+    playerArray[actionCounter].Hand[playerArray[actionCounter].Hand.length - 1]
+      .suit
+  }. <br></br> ${
+    playerArray[actionCounter].HandText
+  }. <br></br>If you would like to draw another card, please press 'Hit' again.`;
   var output = document.querySelector("#output-div");
   output.innerHTML = drawPhaseOutput;
 };
@@ -399,11 +417,22 @@ const playerHitAction = function () {
 // Player Stand Function
 const playerStandAction = function () {
   let drawPhaseOutput = "";
-  drawPhaseOutput = `You have chosen to Stand. Click submit to see who won!`;
-  gameMode = cpuActionPhase;
+  console.log("action counter: " + actionCounter);
+  if (actionCounter < numberOfPlayers - 1) {
+    drawPhaseOutput = `You have chosen to Stand. <br></br> Time for ${
+      playerArray[actionCounter + 1].Name
+    } to decide their move.<br></br>${
+      playerArray[actionCounter + 1].HandText
+    }. <br></br> Press 'Hit' to draw a card or press 'Stand' if you're already satisfied with your hand.`;
+    actionCounter += 1;
+  } else if (actionCounter === numberOfPlayers - 1) {
+    console.log("closing");
+    drawPhaseOutput = `You have chosen to Stand. Hit 'Submit' to see who won!`;
+    gameMode = cpuActionPhase;
+    removeButtons();
+  }
   let output = document.querySelector("#output-div");
   output.innerHTML = drawPhaseOutput;
-  removeButtons();
 };
 
 // CPU Action Function
@@ -606,7 +635,9 @@ const main = function (input) {
     // Create buttons for hit or stand
     createButtons();
     // Check for Blackjack conditions, instant win!
-    outputMessage = checkBlackjack();
+    /*for (let counter = 0; counter < numberOfPlayers; counter += 1) {
+      checkBlackjack(counter);
+    }*/
     console.log(cpuHandCards);
     return outputMessage;
   } else if (gameMode === playerActionPhase) {
