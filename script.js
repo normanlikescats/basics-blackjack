@@ -377,7 +377,7 @@ const messageBlackjack = function (counter) {
       outputMessage +
       `<br></br> Hit Submit for ${playerArray[counter + 1].Name}'s turn!`;
   } else if (counter === numberOfPlayers - 1) {
-    if ((defeatedPlayersCount = numberOfPlayers)) {
+    if (defeatedPlayersCount === numberOfPlayers) {
       outputMessage =
         outputMessage +
         `<br></br> All players DEFEATED. Hit Submit to start another round of Blackjack!`;
@@ -385,6 +385,7 @@ const messageBlackjack = function (counter) {
       outputMessage =
         outputMessage +
         `<br></br> Hit Submit for to see the outcomes of the remaining hands!`;
+      gameMode = cpuActionPhase;
     }
   }
   return outputMessage;
@@ -408,10 +409,6 @@ const messageBlackjack = function (counter) {
   playerArray[counter].Score = 0;
   playerArray[counter].Bet = 0;
 }*/
-
-/*outputMessage =
-  outputMessage +
-  `<br></br> Hit Submit for ${playerArray[counter + 1].Name}'s turn!`;*/
 
 // Player Hit Function
 let actionCounter = 0;
@@ -567,8 +564,18 @@ const compareScore = function () {
   // Base Message to display both hands
   let baseMessage = `${cpuHandCards} (${cpuObj.Score} points)<br></br> ${playerArray[scoreCounter].HandText} (${playerArray[scoreCounter].Score} points)<br></br>`;
   if (scoreCounter < numberOfPlayers - 1) {
+    // Check if Blackjack
+    if (playerArray[scoreCounter].Blackjack === true) {
+      myOutputValue = `${
+        playerArray[scoreCounter].Name
+      }, you got B L A C K J A C K!<br></br>Your current bankroll is $${
+        playerArray[scoreCounter].Bankroll
+      }. <br></br> Hit 'Submit' to see how ${
+        playerArray[scoreCounter + 1].Name
+      } did!`;
+    }
     // Check for > 21 points
-    if (playerArray[scoreCounter].Score > 21 && cpuObj.Score > 21) {
+    else if (playerArray[scoreCounter].Score > 21 && cpuObj.Score > 21) {
       myOutputValue =
         baseMessage +
         `Both ${playerArray[scoreCounter].Name} and dealer are bust! It's a tie!<br></br>Your remaining bankroll is $${playerArray[scoreCounter].Bankroll}.`;
@@ -620,7 +627,10 @@ const compareScore = function () {
       scoreCounter += 1;
     }
   } else if (scoreCounter === numberOfPlayers - 1) {
-    if (playerArray[scoreCounter].Score > 21 && cpuObj.Score > 21) {
+    // Check if Blackjack
+    if (playerArray[scoreCounter].Blackjack === true) {
+      myOutputValue = `${playerArray[scoreCounter].Name}, you got B L A C K J A C K!<br></br>Your current bankroll is $${playerArray[scoreCounter].Bankroll}.`;
+    } else if (playerArray[scoreCounter].Score > 21 && cpuObj.Score > 21) {
       myOutputValue =
         baseMessage +
         `Both ${playerArray[scoreCounter].Name} and dealer are bust! It's a tie!<br></br>Your remaining bankroll is $${playerArray[scoreCounter].Bankroll}.`;
@@ -665,7 +675,7 @@ const compareScore = function () {
       scoreCounter += 1;
     } else {
       myOutputValue =
-        myOutputValue + `<br></br>Hit Submit for another round of Blackjack!`;
+        myOutputValue + `<br></br>Hit 'Submit' for another round of Blackjack!`;
       scoreCounter += 1;
     }
   }
@@ -747,7 +757,7 @@ const main = function (input) {
     return outputMessage;
   } else if (gameMode === dealPhase) {
     outputMessage = dealPhaseFunction();
-    //cpuObj.Hand = testHand;
+    playerArray[1].Hand = testHand;
     // Check for Blackjack conditions, instant win!
     // CPU first
     checkCpuBlackjack();
