@@ -98,6 +98,9 @@ const bankrollInitialInput = function (input, bankrollCounter) {
   if (isNaN(playerInput)) {
     outputMessage = `Please insert a number for your initial bankroll.`;
     bankrollError = true;
+  } else if (playerInput === 0 && roundCounter === 1) {
+    outputMessage = `Please insert a number larger than 0 for your initial bankroll.`;
+    bankrollError = true;
   } else if (bankrollCounter < numberOfPlayers - 1) {
     if (roundCounter === 1) {
       // Initial Bankroll for Round 1
@@ -171,7 +174,7 @@ const betInput = function (input, betCounter) {
         playerArray[betCounter].Bet
       } <br></br> ${playerArray[betCounter + 1].Name}, please enter your bet!`;
     }
-  } else {
+  } else if (betCounter === numberOfPlayers - 1) {
     playerArray[betCounter].Bet = Number(input);
     // for last player
     if (playerArray[betCounter].Bet === playerArray[betCounter].Bankroll) {
@@ -328,7 +331,6 @@ const checkCpuBlackjack = function () {
 // Player Blackjack Function
 const checkPlayerBlackjack = function () {
   for (let counter = 0; counter < numberOfPlayers; counter += 1) {
-    console.log(counter);
     // Sort Player Hand to check Blackjack conditions easily
     playerArray[counter].Hand.sort(function (a, b) {
       return a.rank - b.rank;
@@ -342,7 +344,6 @@ const checkPlayerBlackjack = function () {
         playerArray[counter].Blackjack = true;
       }
     }
-    console.log(`Blackjack?` + playerArray[counter].Blackjack);
   }
 };
 
@@ -351,7 +352,8 @@ let defeatedPlayersCount = 0;
 const messageBlackjack = function (counter) {
   if (playerArray[counter].Blackjack === true && cpuObj.Blackjack === false) {
     // Player Blackjack only. Player wins!
-    playerArray[counter].Bankroll += playerArray[counter].Bet * 1.5;
+    playerArray[counter].Bankroll =
+      playerArray[counter].Bankroll + playerArray[counter].Bet * 1.5;
     outputMessage = `${playerArray[counter].HandText}<br></br>${cpuHandCards}<br></br>You got B L A C K J A C K! You won 1.5x your original bet!<br></br>Your current bankroll is $${playerArray[counter].Bankroll}`;
     actionCounter += 1;
   } else if (
@@ -381,6 +383,58 @@ const messageBlackjack = function (counter) {
       outputMessage =
         outputMessage +
         `<br></br> All players DEFEATED. Hit Submit to start another round of Blackjack!`;
+      // Check if any player is still playing (i.e. Bankroll > 0)
+      for (let counter = 0; counter < numberOfPlayers; counter += 1) {
+        console.log("cutting in progress");
+        if (playerArray[counter].Bankroll === 0) {
+          // Delete players that are Bankroll = 0
+          delete playerArray[counter];
+          console.log(playerArray);
+        } else {
+          // Change the allBust state to allow next round to continue
+          allBust = false;
+        }
+      }
+      console.log(allBust);
+      // Remove empty slots for players that were deleted
+      playerArray = playerArray.filter((x) => x);
+      console.log(playerArray);
+      numberOfPlayers = playerArray.length;
+      console.log(numberOfPlayers);
+      if (allBust === false) {
+        // Send gameMode back to Bankroll phase to ask for bets
+        console.log("lfg one more round! players left: " + numberOfPlayers);
+        gameMode = bankrollPhase;
+        // Reset player hands, score, bets etc.
+        let resetCounter = 0;
+        while (resetCounter < numberOfPlayers) {
+          console.log("run da reset!" + resetCounter);
+          console.log(playerArray);
+          console.log(resetCounter);
+          playerArray[resetCounter].Hand = [];
+          playerArray[resetCounter].Bet = 0;
+          playerArray[resetCounter].Score = 0;
+          playerArray[resetCounter].Blackjack = false;
+          playerArray[resetCounter].HandText = "";
+          resetCounter += 1;
+        }
+        // Reset CPU hand, score and increase round counter
+        cpuObj.Hand = [];
+        cpuObj.Score = 0;
+        roundCounter += 1;
+      } else {
+        // if all players are bust, mock them for their skill issues >:)
+        gameMode = loserPhase;
+      }
+      console.log(playerArray);
+      console.log(roundCounter);
+      console.log(gameMode);
+      bankrollCounter = 0;
+      betCounter = 0;
+      actionCounter = 0;
+      defeatedPlayersCount = 0;
+      scoreCounter = 0;
+      allBust = true;
     } else {
       outputMessage =
         outputMessage +
@@ -390,25 +444,6 @@ const messageBlackjack = function (counter) {
   }
   return outputMessage;
 };
-
-/*if (playerArray[counter].Bankroll === 0) {
-  outputMessage =
-    outputMessage + `<br></br>Your bankroll is now $0. Thanks for playing :)`;
-  gameMode = loserPhase;
-  removeButtons();
-  playerArray[counter].Hand = [];
-  playerArray[counter].Score = 0;
-  playerArray[counter].Bet = 0;
-} else {
-  outputMessage =
-    outputMessage +
-    `Your current bankroll is $${playerOne.Bankroll} <br></br>Hit Submit to go for another round!`;
-  gameMode = bankrollPhase;
-  removeButtons();
-  playerArray[counter].Hand = [];
-  playerArray[counter].Score = 0;
-  playerArray[counter].Bet = 0;
-}*/
 
 // Player Hit Function
 let actionCounter = 0;
@@ -500,7 +535,6 @@ const cpuHitOrStand = function () {
   }
   // Once CPU Score > 17, enter evaluation mode
   gameMode = compareScorePhase;
-  console.log(gameMode);
   computeAllPlayersScore();
   outputValue = compareScore();
   return outputValue;
@@ -521,9 +555,6 @@ const computePlayerScore = function (counter) {
   while (playerScoreCounter < playerArray[counter].Hand.length) {
     if (playerArray[counter].Hand[playerScoreCounter].name === "Ace") {
       playerArray[counter].Hand[playerScoreCounter].rank = 11;
-      playerArray[counter].Score +=
-        playerArray[counter].Hand[playerScoreCounter].rank;
-      playerScoreCounter += 1;
     }
     playerArray[counter].Score +=
       playerArray[counter].Hand[playerScoreCounter].rank;
@@ -537,13 +568,14 @@ const computePlayerScore = function (counter) {
   // Reset counter
   playerScoreCounter = 0;
   // If bust, Ace converts down to 1 point to prevent bust
-  if (
-    playerArray[counter].Score > 21 &&
-    playerArray[counter].Hand[0].name === "Ace"
-  ) {
-    console.log("minus mode");
-    playerArray[counter].Hand[0].rank = 1;
-    playerArray[counter].Score -= 10;
+  for (let count = 0; count < playerArray[counter].Hand.length; count += 1) {
+    if (
+      playerArray[counter].Score > 21 &&
+      playerArray[counter].Hand[count].name === "Ace"
+    ) {
+      playerArray[counter].Hand[count].rank = 1;
+      playerArray[counter].Score -= 10;
+    }
   }
 };
 
@@ -551,12 +583,8 @@ const computePlayerScore = function (counter) {
 let scoreCounter = 0;
 let allBust = true;
 const computeAllPlayersScore = function () {
-  console.log("line 160" + " compare score run");
   // Compute Player Score
   computePlayerScore(scoreCounter);
-  console.log(
-    `player ${scoreCounter} score: ${playerArray[scoreCounter].Score}`
-  );
 };
 
 // Define Compare Function
@@ -566,13 +594,7 @@ const compareScore = function () {
   if (scoreCounter < numberOfPlayers - 1) {
     // Check if Blackjack
     if (playerArray[scoreCounter].Blackjack === true) {
-      myOutputValue = `${
-        playerArray[scoreCounter].Name
-      }, you got B L A C K J A C K!<br></br>Your current bankroll is $${
-        playerArray[scoreCounter].Bankroll
-      }. <br></br> Hit 'Submit' to see how ${
-        playerArray[scoreCounter + 1].Name
-      } did!`;
+      myOutputValue = `${playerArray[scoreCounter].Name}, you got B L A C K J A C K!<br></br>Your current bankroll is $${playerArray[scoreCounter].Bankroll}.`;
     }
     // Check for > 21 points
     else if (playerArray[scoreCounter].Score > 21 && cpuObj.Score > 21) {
@@ -669,40 +691,54 @@ const compareScore = function () {
       }
     }
     if (playerArray[scoreCounter].Bankroll === 0) {
+      console.log(playerArray[scoreCounter].Hand);
       myOutputValue =
         myOutputValue +
         `<br></br>Your bankroll is now $0. Thanks for playing :) <br></br>Hit Submit for another round of Blackjack!`;
-      scoreCounter += 1;
     } else {
       myOutputValue =
         myOutputValue + `<br></br>Hit 'Submit' for another round of Blackjack!`;
-      scoreCounter += 1;
     }
-  }
-  console.log(myOutputValue);
-  // Check if any player is still playing (i.e. Bankroll > 0)
-  for (let counter = 0; counter < numberOfPlayers; counter += 1) {
-    if (playerArray[counter].Bankroll === 0) {
-      // Drop players that are Bankroll = 0
-      playerArray.splice(counter, 1);
-      console.log(playerArray);
+    // Check if any player is still playing (i.e. Bankroll > 0)
+    for (let counter = 0; counter < numberOfPlayers; counter += 1) {
+      if (playerArray[counter].Bankroll === 0) {
+        // Delete players that are Bankroll = 0
+        delete playerArray[counter];
+      } else {
+        // Change the allBust state to allow next round to continue
+        allBust = false;
+      }
+    }
+    // Remove empty slots for players that were deleted
+    playerArray = playerArray.filter((x) => x);
+    numberOfPlayers = playerArray.length;
+    if (allBust === false) {
+      // Send gameMode back to Bankroll phase to ask for bets
+      gameMode = bankrollPhase;
+      // Reset player hands, score, bets etc.
+      let resetCounter = 0;
+      while (resetCounter < numberOfPlayers) {
+        playerArray[resetCounter].Hand = [];
+        playerArray[resetCounter].Bet = 0;
+        playerArray[resetCounter].Score = 0;
+        playerArray[resetCounter].Blackjack = false;
+        playerArray[resetCounter].HandText = "";
+        resetCounter += 1;
+      }
+      // Reset CPU hand, score and increase round counter
+      cpuObj.Hand = [];
+      cpuObj.Score = 0;
+      roundCounter += 1;
     } else {
-      // Change the allBust state to allow next round to continue
-      allBust = false;
+      // if all players are bust, mock them for their skill issues >:)
+      gameMode = loserPhase;
     }
-  }
-  if ((allBust = false)) {
-    // Go back to betting stage if there are available players
-    gameMode = bankrollPhase;
-    // reset all other variables
-    cpuObj.Hand = [];
-    cpuObj.Score = 0;
-    roundCounter += 1;
-    for (let counter = 0; counter < playerArray.length; counter += 1) {
-      playerArray[counter].Hand = [];
-      playerArray[counter].Score = 0;
-      playerArray[counter].Bet = 0;
-    }
+    bankrollCounter = 0;
+    betCounter = 0;
+    actionCounter = 0;
+    defeatedPlayersCount = 0;
+    scoreCounter = 0;
+    allBust = true;
   }
   return myOutputValue;
 };
@@ -745,25 +781,33 @@ const main = function (input) {
     return outputMessage;
   } else if (gameMode === bankrollPhase) {
     outputMessage = bankrollInitialInput(input, bankrollCounter);
+    // only advance if no error in input
     if (bankrollError === false) {
       bankrollCounter += 1;
+    }
+    // reset bankrollError
+    if (bankrollError === true) {
+      bankrollError = false;
     }
     return outputMessage;
   } else if (gameMode === betPhase) {
     outputMessage = betInput(input, betCounter);
+    // only advance if no error in input
     if (betError === false) {
       betCounter += 1;
+    }
+    // reset the betError
+    if (betError === true) {
+      betError = false;
     }
     return outputMessage;
   } else if (gameMode === dealPhase) {
     outputMessage = dealPhaseFunction();
-    playerArray[1].Hand = testHand;
     // Check for Blackjack conditions, instant win!
     // CPU first
     checkCpuBlackjack();
     // Player next
     checkPlayerBlackjack();
-    console.log(cpuHandCards);
     if (
       playerArray[actionCounter].Blackjack === true ||
       cpuObj.Blackjack === true
@@ -773,16 +817,16 @@ const main = function (input) {
       // Create buttons for hit or stand if no Blackjack
       createButtons();
     }
-    console.log(actionCounter);
-    console.log(gameMode);
     return outputMessage;
   } else if (gameMode === playerActionPhase) {
-    console.log(actionCounter);
     outputMessage = `${playerArray[actionCounter].HandText}<br></br>Please use either the Hit or Stand buttons to choose your action.`;
     if (
       playerArray[actionCounter].Blackjack === true ||
       cpuObj.Blackjack === true
     ) {
+      if (document.getElementById("hit-button")) {
+        removeButtons();
+      }
       outputMessage = messageBlackjack(actionCounter);
     } else {
       // Create buttons only if the buttons don't exist (using hit-button as a proxy for both)
@@ -793,14 +837,13 @@ const main = function (input) {
     return outputMessage;
   } else if (gameMode === cpuActionPhase) {
     outputMessage = cpuHitOrStand();
-    console.log(gameMode);
     return outputMessage;
   } else if (gameMode === compareScorePhase) {
     computeAllPlayersScore();
     outputMessage = compareScore();
     return outputMessage;
   } else if (gameMode === loserPhase) {
-    outputMessage = `You're just not that good, please stop gambling.`;
+    outputMessage = `Y'all's just not that good, please stop gambling.`;
     if (loserCounter === 1) {
       console.log(loserCounter);
       gifCreate();
@@ -812,16 +855,3 @@ const main = function (input) {
     return outputMessage;
   }
 };
-
-testHand = [
-  (ace = {
-    name: "Ace",
-    rank: 1,
-    suit: "clubs",
-  }),
-  (jack = {
-    name: "Jack",
-    rank: 10,
-    suit: "spades",
-  }),
-];
